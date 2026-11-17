@@ -787,7 +787,7 @@ func _build_ui() -> void:
 	remote.add_child(_section("远程试玩"))
 
 	_remote_hint = Label.new()
-	_remote_hint.text = "通过加密中继把本机 Web 构建开放到公网，手机扫码即可试玩，无需填写任何地址。"
+	_remote_hint.text = "通过加密远程通道把本机 Web 构建开放到公网，手机扫码即可试玩，无需填写任何地址。"
 	_remote_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_remote_hint.add_theme_font_size_override("font_size", 10)
 	_remote_hint.add_theme_color_override("font_color", _ed_dim)
@@ -2115,7 +2115,7 @@ func _refresh_remote() -> void:
 
 	match phase:
 		"starting":
-			_remote_status_label.text = "⏳ 正在连接中继…"
+			_remote_status_label.text = "⏳ 正在建立远程会话…"
 			_remote_status_label.add_theme_color_override("font_color", _ed_warning)
 		"running":
 			_remote_status_label.text = "● 远程试玩已启动 · 剩余 %s" % _format_remaining(remaining)
@@ -2239,7 +2239,7 @@ func _on_remote_start() -> void:
 		custom_domain
 	)
 	if bool(result.get("ok", false)):
-		_append_log("info", "正在申请远程试玩隧道…")
+		_append_log("info", "正在申请远程试玩会话…")
 	else:
 		_append_log("error", "启动远程试玩失败：%s" % str(result.get("error", "")))
 	_refresh_remote()
