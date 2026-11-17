@@ -2112,7 +2112,7 @@ func _on_remote_start() -> void:
 	if server == null:
 		return
 	# The relay address is baked into the plugin; an empty string selects
-	# the built-in default (http://<lan-ip>:31090).
+	# the built-in production relay (https://gdlive.iowk.com).
 	var ttl := 900
 	if _license_tier == "pro" or _license_tier == "studio":
 		match _remote_ttl.selected:
