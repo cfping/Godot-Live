@@ -186,6 +186,7 @@ var _license_badge: Button
 var _license_activate_button: Button
 var _buy_button: Button
 var _remove_license_button: Button
+var _activate_card: VBoxContainer
 var _ca_pro_hint: Label
 var _log_pro_hint: Label
 var _license_pro := false
@@ -957,7 +958,9 @@ func _build_ui() -> void:
 	license_row.add_child(_remove_license_button)
 
 	# --- 激活授权码 -----------------------------------------------------
-	var activate_card := _card(support)
+	# Hidden entirely once a license is active (see _refresh_license).
+	_activate_card = _card(support)
+	var activate_card := _activate_card
 	activate_card.add_child(_section("激活授权码"))
 	# License codes are long single-line tokens; a multi-line field makes the
 	# whole code visible and lets users paste it from an email or chat without
@@ -2369,6 +2372,10 @@ func _refresh_license() -> void:
 	var st: Dictionary = server.license_status()
 	var pro := bool(st.get("pro", false))
 	_license_pro = pro
+	# Trial users must keep access to the field (trial -> paid conversion);
+	# hide only once a real license is active.
+	if _activate_card != null:
+		_activate_card.visible = not pro or bool(st.get("trial", false))
 	var tier := str(st.get("tier", "free"))
 	_license_tier = tier
 	var days := int(st.get("days_left", 0))
