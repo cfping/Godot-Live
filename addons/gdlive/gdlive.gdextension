@@ -1,0 +1,15 @@
+[configuration]
+
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = "4.7"
+reloadable = true
+
+[libraries]
+
+macos.debug = "res://addons/gdlive/bin/libgdlive.dylib"
+macos.release = "res://addons/gdlive/bin/libgdlive.dylib"
+windows.debug.x86_64 = "res://addons/gdlive/bin/gdlive.dll"
+windows.release.x86_64 = "res://addons/gdlive/bin/gdlive.dll"
+linux.debug.x86_64 = "res://addons/gdlive/bin/libgdlive.so"
+linux.release.x86_64 = "res://addons/gdlive/bin/libgdlive.so"
+

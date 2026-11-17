@@ -1,0 +1,8 @@
+# Godot 编辑器缓存 / 插件本地数据
+godot/.godot/
+.godot/
+.gdlive/
+
+# 系统杂项
+.DS_Store
+Thumbs.db
