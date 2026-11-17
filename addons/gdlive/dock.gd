@@ -701,7 +701,7 @@ func _build_ui() -> void:
 
 	var web_hint := Label.new()
 	web_hint.text = (
-		"所有平台的下载、安装步骤、验证与移除说明都在内置网页里：手机扫码或点「打开完整安装页」。"
+		"所有平台的下载、安装步骤、验证与移除说明都在安装页里：手机扫码或点「打开完整安装页」。"
 	)
 	web_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	web_hint.add_theme_font_size_override("font_size", 10)
