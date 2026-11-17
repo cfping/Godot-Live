@@ -787,7 +787,7 @@ func _build_ui() -> void:
 	remote.add_child(_section("远程试玩"))
 
 	_remote_hint = Label.new()
-	_remote_hint.text = "通过内置中继把本机 Web 构建开放到局域网，手机扫码即可试玩，无需填写任何地址。"
+	_remote_hint.text = "通过加密中继把本机 Web 构建开放到公网，手机扫码即可试玩，无需填写任何地址。"
 	_remote_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_remote_hint.add_theme_font_size_override("font_size", 10)
 	_remote_hint.add_theme_color_override("font_color", _ed_dim)
@@ -2185,11 +2185,11 @@ func _update_remote_limits() -> void:
 	var paid := _license_tier == "pro" or studio
 	if _remote_hint != null:
 		if studio:
-			_remote_hint.text = "中继地址已内置，无需填写。Studio：单次最长 7 天，支持自定义域名；每月 50 小时 / 100GB。"
+			_remote_hint.text = "无需填写任何地址。Studio：单次最长 7 天，支持自定义域名；每月 50 小时 / 100GB。"
 		elif paid:
-			_remote_hint.text = "中继地址已内置，无需填写。Pro：单次最长 24 小时；每月 10 小时 / 20GB。"
+			_remote_hint.text = "无需填写任何地址。Pro：单次最长 24 小时；每月 10 小时 / 20GB。"
 		else:
-			_remote_hint.text = "中继地址已内置，无需填写。免费 / 试用：单次最长 15 分钟，每天 30 分钟，每月 60 分钟 / 2GB。"
+			_remote_hint.text = "无需填写任何地址。免费 / 试用：单次最长 15 分钟，每天 30 分钟，每月 60 分钟 / 2GB。"
 
 	var previous := _remote_ttl.selected
 	_remote_ttl.clear()
