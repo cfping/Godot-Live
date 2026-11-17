@@ -2,7 +2,7 @@
 
 **内嵌于 Godot 编辑器的 Web 游戏开发辅助插件**：一键导出到浏览器、热刷新、HTTPS、浏览器日志回传、手机扫码真机调试、远程试玩——全程不用离开编辑器。
 
-[English](README.md) | 简体中文 · Godot 4.7+ · MIT（GDScript 与 Demo）
+[English](README.md) | 简体中文 · Godot 4.2+ · MIT（GDScript 与 Demo）
 
 ![Godot 编辑器中的 GDLive 面板](docs/screenshots/editor-panel.jpg)
 
@@ -11,7 +11,7 @@
 ## 快速开始
 
 1. 克隆本仓库（或从 [Releases](https://github.com/cfping/Godot-Live/releases) 下载）
-2. 用 Godot 4.7+ 打开工程——编辑器会提示启用 GDLive 插件，确认即可（也可在 **项目 → 插件** 中手动启用）
+2. 用 Godot 4.2+ 打开工程——编辑器会提示启用 GDLive 插件，确认即可（也可在 **项目 → 插件** 中手动启用）
 3. 在 **GDLive** 停靠面板中点**导出**——服务启动，局域网地址出现在面板
 4. 手机扫码，或点**浏览器打开**
 5. 首次运行自动开始 14 天全功能试用——无需付款、不绑卡

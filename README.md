@@ -2,7 +2,7 @@
 
 **A web-game development assistant embedded in the Godot editor.** One-click export to browser, hot reload, HTTPS, browser console relay, phone QR-code debugging, and remote playtesting — without ever leaving the editor.
 
-[简体中文](README.zh-CN.md) | English · Godot 4.7+ · MIT (GDScript & demo) 
+[简体中文](README.zh-CN.md) | English · Godot 4.2+ · MIT (GDScript & demo) 
 
 ![GDLive panel in the Godot editor](docs/screenshots/editor-panel.jpg)
 
@@ -11,7 +11,7 @@ This repository is a ready-to-run **demo project with the GDLive plugin included
 ## Quick start
 
 1. Clone this repository (or download it from [Releases](https://github.com/cfping/Godot-Live/releases))
-2. Open the project in Godot 4.7+ — the editor may ask to enable the GDLive plugin; say yes (or enable it manually in *Project → Plugins*)
+2. Open the project in Godot 4.2 or newer — the editor may ask to enable the GDLive plugin; say yes (or enable it manually in *Project → Plugins*)
 3. In the **GDLive** dock panel, press **Export** — the server starts and the LAN URL appears
 4. Scan the QR code with your phone, or press **Open in browser**
 5. A 14-day full-featured trial starts automatically on first run — no payment, no credit card
