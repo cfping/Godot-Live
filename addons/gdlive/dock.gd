@@ -1228,24 +1228,22 @@ func _build_ui() -> void:
 	buy_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_copy_row.add_child(buy_copy)
 
-	buy_box.add_child(_section("② 微信 / 支付宝扫码付款"))
-	var buy_qr_box := VBoxContainer.new()
-	buy_qr_box.add_theme_constant_override("separation", 8)
-	buy_box.add_child(buy_qr_box)
-	var buy_wx_title := Label.new()
-	buy_wx_title.text = "微信支付"
-	buy_wx_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	buy_wx_title.add_theme_color_override("font_color", Color(0.25, 0.73, 0.31))
-	buy_qr_box.add_child(buy_wx_title)
+	buy_box.add_child(_section("② 选择支付方式，扫码付款"))
+	var buy_tabs := TabContainer.new()
+	buy_tabs.custom_minimum_size = Vector2(0, 272)
+	buy_box.add_child(buy_tabs)
+
+	var buy_wx_page := CenterContainer.new()
+	buy_wx_page.name = "微信支付"
+	buy_tabs.add_child(buy_wx_page)
 	_buy_qr_wechat = _buy_qr(220)
-	buy_qr_box.add_child(_buy_qr_wechat)
-	var buy_ali_title := Label.new()
-	buy_ali_title.text = "支付宝"
-	buy_ali_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	buy_ali_title.add_theme_color_override("font_color", Color(0.35, 0.65, 1.0))
-	buy_qr_box.add_child(buy_ali_title)
+	buy_wx_page.add_child(_buy_qr_wechat)
+
+	var buy_ali_page := CenterContainer.new()
+	buy_ali_page.name = "支付宝"
+	buy_tabs.add_child(buy_ali_page)
 	_buy_qr_alipay = _buy_qr(220)
-	buy_qr_box.add_child(_buy_qr_alipay)
+	buy_ali_page.add_child(_buy_qr_alipay)
 
 	_buy_step3_label = Label.new()
 	_buy_step3_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
