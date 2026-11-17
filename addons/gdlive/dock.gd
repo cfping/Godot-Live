@@ -196,11 +196,9 @@ var _support_open_button: Button
 var _support_copy_button: Button
 
 var _remote_status_label: Label
-var _remote_url_link: LinkButton
 var _remote_qr
 var _remote_password_input: LineEdit
 var _remote_custom_input: LineEdit
-var _remote_hint: Label
 var _remote_ttl: OptionButton
 var _remote_start_button: Button
 var _remote_stop_button: Button
@@ -786,24 +784,15 @@ func _build_ui() -> void:
 
 	remote.add_child(_section("远程试玩"))
 
-	_remote_hint = Label.new()
-	_remote_hint.text = "通过加密远程通道把本机 Web 构建开放到公网，手机扫码即可试玩，无需填写任何地址。"
-	_remote_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_remote_hint.add_theme_font_size_override("font_size", 10)
-	_remote_hint.add_theme_color_override("font_color", _ed_dim)
-	remote.add_child(_remote_hint)
-
 	# The relay address is baked into the plugin; only the duration is
 	# user-selectable here.
 	var ttl_row := HBoxContainer.new()
 	remote.add_child(ttl_row)
 	_remote_ttl = OptionButton.new()
-	_remote_ttl.add_item("1 小时", 0)
-	_remote_ttl.add_item("6 小时", 1)
-	_remote_ttl.add_item("12 小时", 2)
-	_remote_ttl.add_item("24 小时", 3)
-	_remote_ttl.add_item("7 天", 4)
-	_remote_ttl.selected = 0
+	# Durations are rebuilt per tier in _update_remote_limits(); kept in
+	# sync with the ttl mapping in _on_remote_start.
+	_remote_ttl.add_item("15 分钟", 2)
+	_remote_ttl.selected = 2
 	ttl_row.add_child(_remote_ttl)
 
 	var remote_pw_row := HBoxContainer.new()
@@ -846,26 +835,13 @@ func _build_ui() -> void:
 	_remote_qr = QR_VIEW.new()
 	remote_qr_box.add_child(_remote_qr)
 
-	var remote_url_box := CenterContainer.new()
-	remote_url_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	remote.add_child(remote_url_box)
-	_remote_url_link = LinkButton.new()
-	_remote_url_link.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
-	_remote_url_link.add_theme_font_size_override("font_size", 11)
-	_remote_url_link.add_theme_color_override("font_color", Color(0.35, 0.65, 0.98))
-	_remote_url_link.add_theme_color_override("font_hover_color", Color(0.55, 0.78, 1.0))
-	_remote_url_link.add_theme_color_override("font_pressed_color", Color(0.25, 0.55, 0.9))
-	_remote_url_link.tooltip_text = "点击在浏览器中打开远程试玩地址"
-	_remote_url_link.pressed.connect(_on_remote_open)
-	remote_url_box.add_child(_remote_url_link)
-
 	var remote_action_row := HBoxContainer.new()
 	remote.add_child(remote_action_row)
 	_remote_copy_button = _button("复制地址", _on_remote_copy)
 	_remote_copy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_remote_copy_button.disabled = true
 	remote_action_row.add_child(_remote_copy_button)
-	_remote_open_button = _button("打开", _on_remote_open)
+	_remote_open_button = _button("打开浏览器", _on_remote_open)
 	_remote_open_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_remote_open_button.disabled = true
 	remote_action_row.add_child(_remote_open_button)
@@ -2162,17 +2138,10 @@ func _refresh_remote() -> void:
 				_remote_qr.clear_matrix()
 		if gained:
 			# Hand the address over immediately: clipboard + one click opens it.
+			# The URL itself is never displayed (privacy); QR + 复制/打开 suffice.
 			DisplayServer.clipboard_set(url)
 			_append_log("info", "远程试玩地址已复制到剪贴板，可直接粘贴分享")
-			_remote_url_link.tooltip_text = "已自动复制到剪贴板，点击在浏览器中打开"
 
-	if url == "":
-		_remote_url_link.text = ""
-		_remote_url_link.uri = ""
-		_remote_url_link.tooltip_text = "点击在浏览器中打开远程试玩地址"
-	else:
-		_remote_url_link.text = url
-		_remote_url_link.uri = url
 	_remote_copy_button.disabled = url == ""
 	_remote_open_button.disabled = url == ""
 	_update_remote_limits()
@@ -2183,29 +2152,26 @@ func _update_remote_limits() -> void:
 		return
 	var studio := _license_tier == "studio"
 	var paid := _license_tier == "pro" or studio
-	if _remote_hint != null:
-		if studio:
-			_remote_hint.text = "无需填写任何地址。Studio：单次最长 7 天，支持自定义域名；每月 50 小时 / 100GB。"
-		elif paid:
-			_remote_hint.text = "无需填写任何地址。Pro：单次最长 24 小时；每月 10 小时 / 20GB。"
-		else:
-			_remote_hint.text = "无需填写任何地址。免费 / 试用：单次最长 15 分钟，每天 30 分钟，每月 60 分钟 / 2GB。"
-
 	var previous := _remote_ttl.selected
 	_remote_ttl.clear()
 	if paid:
-		_remote_ttl.add_item("1 小时", 0)
-		_remote_ttl.add_item("6 小时", 1)
-		_remote_ttl.add_item("12 小时", 2)
-		_remote_ttl.add_item("24 小时", 3)
+		_remote_ttl.add_item("5 分钟", 0)
+		_remote_ttl.add_item("10 分钟", 1)
+		_remote_ttl.add_item("15 分钟", 2)
+		_remote_ttl.add_item("30 分钟", 3)
+		_remote_ttl.add_item("45 分钟", 4)
+		_remote_ttl.add_item("60 分钟", 5)
+		_remote_ttl.add_item("6 小时", 6)
+		_remote_ttl.add_item("12 小时", 7)
+		_remote_ttl.add_item("24 小时", 8)
 		if studio:
-			_remote_ttl.add_item("7 天", 4)
+			_remote_ttl.add_item("7 天", 9)
 		_remote_ttl.disabled = false
 		_remote_ttl.selected = clampi(previous, 0, _remote_ttl.item_count - 1)
 	else:
-		_remote_ttl.add_item("15 分钟", 0)
+		_remote_ttl.add_item("15 分钟", 2)
 		_remote_ttl.disabled = true
-		_remote_ttl.selected = 0
+		_remote_ttl.selected = 2
 	_remote_custom_input.visible = studio
 
 
@@ -2214,18 +2180,29 @@ func _on_remote_start() -> void:
 		return
 	# The relay address is baked into the plugin; an empty string selects
 	# the built-in production relay (https://gdlive.iowk.com).
+	# Free / trial is always a single 15-minute session.
 	var ttl := 900
 	if _license_tier == "pro" or _license_tier == "studio":
 		match _remote_ttl.selected:
 			0:
-				ttl = 3600
+				ttl = 5 * 60
 			1:
-				ttl = 6 * 3600
+				ttl = 10 * 60
 			2:
-				ttl = 12 * 3600
+				ttl = 15 * 60
 			3:
-				ttl = 24 * 3600
+				ttl = 30 * 60
 			4:
+				ttl = 45 * 60
+			5:
+				ttl = 60 * 60
+			6:
+				ttl = 6 * 3600
+			7:
+				ttl = 12 * 3600
+			8:
+				ttl = 24 * 3600
+			9:
 				ttl = 7 * 86400
 
 	var custom_domain := ""
@@ -2256,7 +2233,7 @@ func _on_remote_copy() -> void:
 	if _remote_last_url == "":
 		return
 	DisplayServer.clipboard_set(_remote_last_url)
-	_append_log("info", "已复制远程试玩地址：" + _remote_last_url)
+	_append_log("info", "已复制远程试玩地址，可直接粘贴分享")
 	# Flash the button so the user gets visual feedback even without the log.
 	_remote_copy_token += 1
 	var token := _remote_copy_token
