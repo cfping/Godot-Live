@@ -190,6 +190,10 @@ var _license_badge: Button
 var _license_activate_button: Button
 var _buy_button: Button
 var _remove_license_button: Button
+# License / support-server button rows. Both stay hidden for a permanently
+# licensed (private) build: nothing to renew, remove or purchase.
+var _license_row: HBoxContainer
+var _support_row: HBoxContainer
 var _activate_card: VBoxContainer
 var _ca_pro_hint: Label
 var _log_pro_hint: Label
@@ -224,6 +228,7 @@ var _remote_toasts_fired: Dictionary = {}
 const REMOTE_REMIND_SECONDS: Array[int] = [600, 300, 60, 10]
 
 var _confirm_rotate: ConfirmationDialog
+var _confirm_remove_license: ConfirmationDialog
 var _install_urls: PackedStringArray = PackedStringArray()
 var _ca_trust_installed := false
 var _ca_trust_detail := ""
@@ -952,6 +957,7 @@ func _build_ui() -> void:
 	machine_row.add_child(copy_machine)
 
 	var license_row := HBoxContainer.new()
+	_license_row = license_row
 	status_card.add_child(license_row)
 	_buy_button = _button("购买 / 升级 Pro", _on_open_pro_page)
 	_buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -959,6 +965,7 @@ func _build_ui() -> void:
 	license_row.add_child(_buy_button)
 	_remove_license_button = _button("移除本机授权", _on_remove_license)
 	_remove_license_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_remove_license_button.tooltip_text = "退出 Pro 并清除本机授权（会二次确认）"
 	license_row.add_child(_remove_license_button)
 
 	# --- 激活授权码 -----------------------------------------------------
@@ -1007,6 +1014,7 @@ func _build_ui() -> void:
 
 	# 支持服务在后台运行，面板只保留两个入口按钮，不展示地址 / 端口。
 	var support_row := HBoxContainer.new()
+	_support_row = support_row
 	support_row.add_theme_constant_override("separation", 6)
 	support.add_child(support_row)
 	_support_open_button = _button("打开授权页", _on_open_support)
@@ -1121,33 +1129,32 @@ func _build_ui() -> void:
 	donate_intro.add_theme_color_override("font_color", Color(0.62, 0.66, 0.72))
 	donate_card.add_child(donate_intro)
 
-	# Stack the codes vertically at full width. The embedded posters are
-	# cropped to their QR card in `_set_donate_texture`, so this stays sharp
-	# instead of squeezing a 600x900 image into one narrow column.
-	var wechat_title := Label.new()
-	wechat_title.text = "微信赞赏"
-	wechat_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	wechat_title.add_theme_color_override("font_color", Color(0.25, 0.73, 0.31))
-	donate_card.add_child(wechat_title)
+	# One QR at a time via tabs (same pattern as the buy dialog): the dock is
+	# narrow, and stacking two 250px codes makes the support tab endless.
+	var donate_tabs := TabContainer.new()
+	donate_tabs.custom_minimum_size = Vector2(0, 268)
+	donate_card.add_child(donate_tabs)
+
+	var donate_wx_page := CenterContainer.new()
+	donate_wx_page.name = "微信赞赏"
+	donate_tabs.add_child(donate_wx_page)
 	var wechat_qr_card := PanelContainer.new()
 	wechat_qr_card.add_theme_stylebox_override("panel", _qr_card_style())
-	donate_card.add_child(wechat_qr_card)
+	donate_wx_page.add_child(wechat_qr_card)
 	_donate_qr_wechat = TextureRect.new()
-	_donate_qr_wechat.custom_minimum_size = Vector2(0, 250)
+	_donate_qr_wechat.custom_minimum_size = Vector2(220, 220)
 	_donate_qr_wechat.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_donate_qr_wechat.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	wechat_qr_card.add_child(_donate_qr_wechat)
 
-	var alipay_title := Label.new()
-	alipay_title.text = "支付宝赞赏"
-	alipay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	alipay_title.add_theme_color_override("font_color", Color(0.35, 0.65, 1.0))
-	donate_card.add_child(alipay_title)
+	var donate_ali_page := CenterContainer.new()
+	donate_ali_page.name = "支付宝赞赏"
+	donate_tabs.add_child(donate_ali_page)
 	var alipay_qr_card := PanelContainer.new()
 	alipay_qr_card.add_theme_stylebox_override("panel", _qr_card_style())
-	donate_card.add_child(alipay_qr_card)
+	donate_ali_page.add_child(alipay_qr_card)
 	_donate_qr_alipay = TextureRect.new()
-	_donate_qr_alipay.custom_minimum_size = Vector2(0, 250)
+	_donate_qr_alipay.custom_minimum_size = Vector2(220, 220)
 	_donate_qr_alipay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_donate_qr_alipay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	alipay_qr_card.add_child(_donate_qr_alipay)
@@ -1182,6 +1189,20 @@ func _build_ui() -> void:
 	)
 	_confirm_rotate.confirmed.connect(_do_rotate_ca)
 	add_child(_confirm_rotate)
+
+	_confirm_remove_license = ConfirmationDialog.new()
+	_confirm_remove_license.title = "移除本机授权"
+	_confirm_remove_license.ok_button_text = "确认移除"
+	_confirm_remove_license.cancel_button_text = "取消"
+	_confirm_remove_license.dialog_text = (
+		"移除后将立即退出 Pro：HTTPS、远程调试、自动导出等 Pro 功能会关闭，"
+		+ "正在进行的远程试玩也会断开。\n\n"
+		+ "授权码不会丢失，可用同一个授权码重新激活；如果设备数量已达上限，"
+		+ "可能需要先联系我们解绑。\n\n"
+		+ "确定要移除本机授权吗？"
+	)
+	_confirm_remove_license.confirmed.connect(_do_remove_license)
+	add_child(_confirm_remove_license)
 
 	_ca_prompt = AcceptDialog.new()
 	_ca_prompt.title = "GDLive · 建议安装根证书"
@@ -1591,7 +1612,7 @@ func _section(text: String) -> Label:
 ## child") and the new dialog renders at a stale size with dead space. Hide
 ## the sibling dialogs first so only one is ever visible.
 func _popup_dialog(dialog: Window, minsize := Vector2i(0, 0)) -> void:
-	for other in [_confirm_rotate, _ca_prompt, _onboard, _buy_dialog, _email_dialog]:
+	for other in [_confirm_rotate, _confirm_remove_license, _ca_prompt, _onboard, _buy_dialog, _email_dialog]:
 		if other != null and other != dialog:
 			other.hide()
 	if minsize == Vector2i(0, 0):
@@ -2456,6 +2477,12 @@ func _refresh_license() -> void:
 	_license_machine_label.tooltip_text = "机器码由本机硬件标识本地生成，仅用于授权绑定，不会上传；购买后发给我们换取授权码"
 	_buy_button.text = "续费 / 更换授权" if pro else "购买 / 升级 Pro"
 	_remove_license_button.disabled = not pro
+	# 私用（永久）授权：没有续费 / 移除授权 / 购买入口，整行隐藏。
+	var permanent := pro and expires == "永久"
+	if _license_row != null:
+		_license_row.visible = not permanent
+	if _support_row != null:
+		_support_row.visible = not permanent
 	if _buy_dialog != null:
 		_buy_price_label.text = str(st.get("price", ""))
 		_buy_machine_label.text = str(st.get("machine_id", ""))
@@ -2722,6 +2749,14 @@ func _on_activate_license() -> void:
 
 
 func _on_remove_license() -> void:
+	# Destructive and hard to undo silently, so always require an explicit
+	# second confirmation instead of revoking on the first click.
+	if server == null or not _license_pro:
+		return
+	_popup_dialog(_confirm_remove_license)
+
+
+func _do_remove_license() -> void:
 	if server == null:
 		return
 	var result: Dictionary = server.deactivate_license()
