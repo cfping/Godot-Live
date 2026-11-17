@@ -205,6 +205,11 @@ var _remote_stop_button: Button
 var _remote_copy_button: Button
 var _remote_open_button: Button
 var _remote_last_url := ""
+# Floating toast overlay (child of the editor root viewport, so it shows
+# above every dock tab); auto-fades after a few seconds.
+var _toast_panel: PanelContainer
+var _toast_label: Label
+var _toast_tween: Tween
 var _remote_copy_token := 0
 var _remote_tick_timer: Timer
 var _remote_session_id := ""
@@ -270,6 +275,64 @@ func _exit_tree() -> void:
 	if server != null:
 		server.stop_remote()
 	_save_settings()
+	if is_instance_valid(_toast_panel):
+		_toast_panel.queue_free()
+
+
+# ---------------------------------------------------------------------------
+# toast — visible feedback for actions whose log lines land on another tab
+# ---------------------------------------------------------------------------
+
+func _toast(text: String, level := "info") -> void:
+	_ensure_toast()
+	_toast_label.text = text
+	var color: String = LEVEL_COLORS.get(level, LEVEL_COLORS["info"])
+	_toast_label.add_theme_color_override("font_color", Color(color))
+	_toast_panel.visible = true
+	_toast_panel.modulate = Color(1, 1, 1, 1)
+	if _toast_tween != null:
+		_toast_tween.kill()
+	_toast_tween = create_tween()
+	_toast_tween.tween_interval(2.4)
+	_toast_tween.tween_property(_toast_panel, "modulate:a", 0.0, 0.4)
+	_toast_tween.tween_callback(_hide_toast)
+
+
+func _hide_toast() -> void:
+	if is_instance_valid(_toast_panel):
+		_toast_panel.hide()
+
+
+func _ensure_toast() -> void:
+	if is_instance_valid(_toast_panel):
+		return
+	_toast_panel = PanelContainer.new()
+	_toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.086, 0.106, 0.134, 0.96)
+	style.border_color = Color(0.22, 0.26, 0.32)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 7
+	style.content_margin_bottom = 7
+	_toast_panel.add_theme_stylebox_override("panel", style)
+	_toast_label = Label.new()
+	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast_label.add_theme_font_size_override("font_size", 13)
+	_toast_panel.add_child(_toast_label)
+	# Anchor bottom-center of the editor window, slightly above the status bar.
+	_toast_panel.set_anchor(SIDE_LEFT, 0.5, false)
+	_toast_panel.set_anchor(SIDE_RIGHT, 0.5, false)
+	_toast_panel.set_anchor(SIDE_TOP, 1.0, false)
+	_toast_panel.set_anchor(SIDE_BOTTOM, 1.0, false)
+	_toast_panel.offset_left = -220
+	_toast_panel.offset_right = 220
+	_toast_panel.offset_top = -64
+	_toast_panel.offset_bottom = -28
+	_toast_panel.visible = false
+	get_tree().root.add_child(_toast_panel)
 
 
 # ---------------------------------------------------------------------------
@@ -511,6 +574,10 @@ func _build_ui() -> void:
 	for box in [_auto_export, _auto_reload, _watch, _tls, _auto_start, _debug_overlay]:
 		_settings_box.add_child(box)
 		box.toggled.connect(func(_pressed): _on_option_changed())
+	_debug_overlay.toggled.connect(
+		func(pressed: bool):
+			_toast("远程调试面板已" + ("开启，页面刷新后生效" if pressed else "关闭"))
+	)
 
 	run.add_child(_section("局域网地址"))
 
@@ -1589,6 +1656,7 @@ func _on_toggle() -> void:
 	if bool(server.is_running()):
 		server.stop()
 		_append_log("info", "服务器已停止")
+		_toast("服务器已停止")
 		_refresh_status()
 	else:
 		_start_server()
@@ -1614,6 +1682,7 @@ func _on_reload_clients() -> void:
 		return
 	var count: int = int(server.reload_clients())
 	_append_log("info", "已推送刷新到 %d 个页面" % count)
+	_toast("已推送刷新到 %d 个页面" % count)
 
 
 func _on_shot_request() -> void:
@@ -1627,8 +1696,10 @@ func _on_shot_request() -> void:
 	var count := result.to_int()
 	if count <= 0:
 		_append_log("warn", "没有已连接的页面，截图请求未送达（先在浏览器/手机打开游戏）")
+		_toast("没有已连接的页面", "warn")
 	else:
 		_append_log("info", "已向 %d 个页面请求截图，等待回传…" % count)
+		_toast("已向 %d 个页面请求截图…" % count)
 
 
 func _on_screenshot(uid: String, png_base64: String) -> void:
@@ -1650,6 +1721,7 @@ func _on_screenshot(uid: String, png_base64: String) -> void:
 		_append_log("error", "截图保存失败：%s（%s）" % [file_path, error_string(err)])
 		return
 	_append_log("success", "已保存截图 → %s（%d×%d）" % [file_path, image.get_width(), image.get_height()])
+	_toast("截图已保存（%d×%d）" % [image.get_width(), image.get_height()], "success")
 
 
 func _on_cmd_submitted(text: String) -> void:
@@ -1662,8 +1734,10 @@ func _on_cmd_submitted(text: String) -> void:
 	var result := String(server.send_command(expr))
 	if result.begins_with("ERROR::"):
 		_append_log("error", result.trim_prefix("ERROR::"))
+		_toast("指令发送失败", "error")
 		return
 	_append_log("info", "[cmd] 已发送到 %s 个页面：%s" % [result, expr])
+	_toast("指令已发送到 %s 个页面" % result)
 	_cmd_history.push_front(expr)
 	if _cmd_history.size() > 20:
 		_cmd_history.resize(20)
@@ -1811,6 +1885,7 @@ func _on_open() -> void:
 	var url := _selected_url()
 	if url != "":
 		OS.shell_open(url + "/")
+		_toast("已在浏览器打开游戏地址")
 
 
 func _on_open_qr_page() -> void:
@@ -1819,12 +1894,14 @@ func _on_open_qr_page() -> void:
 		_append_log("warn", "先启动服务器，再打开二维码页面")
 		return
 	OS.shell_open(base + "/__gdlive/qr")
+	_toast("已在浏览器打开二维码页面")
 
 
 func _on_open_debug_page() -> void:
 	var url := _selected_url()
 	if url != "":
 		OS.shell_open(url + "/__gdlive/")
+		_toast("已在浏览器打开调试页")
 
 
 func _on_copy_url() -> void:
@@ -1832,6 +1909,7 @@ func _on_copy_url() -> void:
 	if url != "":
 		DisplayServer.clipboard_set(url + "/")
 		_append_log("info", "已复制 %s/" % url)
+		_toast("已复制游戏地址")
 
 
 # ---------------------------------------------------------------------------
@@ -1910,6 +1988,7 @@ func _on_create_preset() -> void:
 		_append_log("error", "写入 export_presets.cfg 失败: %s" % error_string(err))
 		return
 	_append_log("success", "已创建 Web 预设（线程支持关闭，兼容局域网 HTTP）")
+	_toast("已创建 Web 预设", "success")
 	_refresh_preset_label()
 	_apply_config()
 
@@ -2039,6 +2118,7 @@ func _on_open_support() -> void:
 		_append_log("warn", "支持服务未启动")
 		return
 	OS.shell_open(_support_base + "/__gdlive/")
+	_toast("已在浏览器打开支持页")
 
 
 func _on_copy_support() -> void:
@@ -2046,6 +2126,7 @@ func _on_copy_support() -> void:
 		return
 	DisplayServer.clipboard_set(_support_base + "/__gdlive/")
 	_append_log("info", "已复制支持服务地址")
+	_toast("已复制支持页地址")
 
 
 # ---------------------------------------------------------------------------
@@ -2217,8 +2298,10 @@ func _on_remote_start() -> void:
 	)
 	if bool(result.get("ok", false)):
 		_append_log("info", "正在申请远程试玩会话…")
+		_toast("正在申请远程试玩会话…")
 	else:
 		_append_log("error", "启动远程试玩失败：%s" % str(result.get("error", "")))
+		_toast("启动远程试玩失败：" + str(result.get("error", "")), "error")
 	_refresh_remote()
 
 
@@ -2226,6 +2309,7 @@ func _on_remote_stop() -> void:
 	if server == null:
 		return
 	server.stop_remote()
+	_toast("正在停止远程试玩…")
 	_refresh_remote()
 
 
@@ -2234,6 +2318,7 @@ func _on_remote_copy() -> void:
 		return
 	DisplayServer.clipboard_set(_remote_last_url)
 	_append_log("info", "已复制远程试玩地址，可直接粘贴分享")
+	_toast("已复制远程试玩地址")
 	# Flash the button so the user gets visual feedback even without the log.
 	_remote_copy_token += 1
 	var token := _remote_copy_token
@@ -2246,6 +2331,7 @@ func _on_remote_copy() -> void:
 func _on_remote_open() -> void:
 	if _remote_last_url != "":
 		OS.shell_open(_remote_last_url)
+		_toast("已在浏览器打开远程试玩地址")
 
 
 func _format_remaining(seconds: int) -> String:
@@ -2385,6 +2471,7 @@ func _on_copy_machine() -> void:
 	var st: Dictionary = server.license_status()
 	DisplayServer.clipboard_set(str(st.get("machine_id", "")))
 	_append_log("info", "已复制机器码，购买后发给我们即可换取授权码")
+	_toast("已复制机器码")
 
 
 func _contact_info() -> Dictionary:
@@ -2510,16 +2597,19 @@ func _on_email_dialog_action(action: StringName) -> void:
 func _on_copy_email_recipient() -> void:
 	DisplayServer.clipboard_set(_email_to_input.text if _email_to_input != null else _contact_email)
 	_append_log("info", "已复制联系邮箱：%s" % _contact_email)
+	_toast("已复制联系邮箱")
 
 
 func _on_copy_contact_email() -> void:
 	DisplayServer.clipboard_set(_contact_email)
 	_append_log("info", "已复制联系邮箱：%s" % _contact_email)
+	_toast("已复制联系邮箱")
 
 
 func _on_copy_contact_wechat() -> void:
 	DisplayServer.clipboard_set(_contact_wechat)
 	_append_log("info", "已复制微信号：%s" % _contact_wechat)
+	_toast("已复制微信号")
 
 
 func _open_website() -> void:
@@ -2579,11 +2669,13 @@ func _on_activate_license() -> void:
 	var result: Dictionary = server.activate_license(key)
 	if bool(result.get("ok", false)):
 		_append_log("success", "Pro 授权激活成功")
+		_toast("Pro 授权激活成功", "success")
 		_license_input.text = ""
 		_refresh_license()
 		_append_log("info", "重启 GDLive 服务器后 HTTPS / 页面调试面板生效")
 	else:
 		_append_log("error", "激活失败: %s" % str(result.get("error", "")))
+		_toast("激活失败：" + str(result.get("error", "")), "error")
 
 
 func _on_remove_license() -> void:
@@ -2593,9 +2685,11 @@ func _on_remove_license() -> void:
 	if bool(result.get("ok", false)):
 		server.stop_remote()
 		_append_log("warn", "已移除本机授权，回到免费版")
+		_toast("已移除本机授权", "warn")
 		_refresh_license()
 	else:
 		_append_log("error", str(result.get("error", "")))
+		_toast(str(result.get("error", "")), "error")
 
 
 # ---------------------------------------------------------------------------
@@ -2740,6 +2834,10 @@ func _on_check_trust() -> void:
 		"success" if _ca_trust_installed else "warn",
 		"根证书信任检测：%s" % _ca_trust_detail
 	)
+	_toast(
+		"根证书信任检测：%s" % _ca_trust_detail,
+		"success" if _ca_trust_installed else "warn"
+	)
 
 
 func check_ca_on_startup() -> void:
@@ -2803,8 +2901,10 @@ func _on_generate_ca() -> void:
 	if bool(result.get("ok", false)):
 		_append_log("success", "根证书已生成：%s" % str(result.get("fingerprint", "")))
 		_append_log("info", "下一步：点「安装根证书」加入本机信任库")
+		_toast("根证书已生成，下一步：安装到本机", "success")
 	else:
 		_append_log("error", "生成根证书失败: %s" % str(result.get("error", "")))
+		_toast("生成根证书失败", "error")
 	_ca_trust_installed = false
 	_ca_trust_detail = "尚未安装"
 	_refresh_ca_info()
@@ -2815,23 +2915,29 @@ func _on_install_ca() -> void:
 		return
 	if not server.install_ca():
 		_append_log("warn", "无法自动安装，请使用「手机安装引导」手动安装")
+		_toast("无法自动安装，请手动安装", "warn")
 		return
 	_append_log("info", "正在安装根证书到系统信任库…")
+	_toast("正在安装根证书…")
 
 
 func _on_ca_installed(ok: bool, message: String) -> void:
 	if ok:
 		_append_log("success", "根证书安装完成：" + message)
+		_toast("根证书安装完成", "success")
 	else:
 		_append_log("error", "自动安装未完成：" + message)
+		_toast("自动安装未完成：" + message, "error")
 	_check_ca_trust()
 
 
 func _on_open_ca_guide() -> void:
 	if _ca_page_url == "":
 		_append_log("warn", "先启动服务器，再打开安装页")
+		_toast("先启动服务器", "warn")
 		return
 	OS.shell_open(_ca_page_url)
+	_toast("已在浏览器打开安装页")
 
 
 func _on_copy_ca_page() -> void:
@@ -2839,6 +2945,7 @@ func _on_copy_ca_page() -> void:
 		return
 	DisplayServer.clipboard_set(_ca_page_url)
 	_append_log("info", "已复制安装页地址: " + _ca_page_url)
+	_toast("已复制安装页地址")
 
 
 func _load_donate_images() -> void:
@@ -2905,11 +3012,14 @@ func _on_open_donate() -> void:
 		_append_log("warn", "支持服务未启动，可直接在「支持」页扫码赞赏")
 		return
 	OS.shell_open(base + "/__gdlive/donate")
+	_toast("已在浏览器打开赞赏页")
 
 
 func _on_open_export_dir() -> void:
 	DirAccess.make_dir_recursive_absolute(_out_dir)
 	OS.shell_show_in_file_manager(_out_dir, true)
+	_append_log("info", "已在文件管理器打开导出目录")
+	_toast("已在文件管理器打开导出目录")
 
 
 func _on_open_ca_dir() -> void:
@@ -2919,6 +3029,8 @@ func _on_open_ca_dir() -> void:
 		dir = str(server.pki_dir())
 	DirAccess.make_dir_recursive_absolute(dir)
 	OS.shell_show_in_file_manager(dir, true)
+	_append_log("info", "已在文件管理器打开证书目录")
+	_toast("已在文件管理器打开证书目录")
 
 
 func _on_rotate_ca() -> void:
@@ -2933,8 +3045,10 @@ func _do_rotate_ca() -> void:
 	var result: Dictionary = server.rotate_ca()
 	if bool(result.get("ok", false)):
 		_append_log("warn", "已生成新的根证书：%s（所有设备需要重新信任）" % str(result.get("cn", "")))
+		_toast("已生成新的根证书，设备需重新信任", "warn")
 	else:
 		_append_log("error", "重新生成失败: %s" % str(result.get("error", "")))
+		_toast("重新生成失败：" + str(result.get("error", "")), "error")
 	_ca_trust_installed = false
 	_ca_trust_detail = "新证书尚未安装"
 	_refresh_ca_info()
@@ -3077,12 +3191,14 @@ func _copy_log() -> void:
 			lines.append("%s [%s] %s" % [entry.time, entry.level, entry.text])
 	DisplayServer.clipboard_set("\n".join(lines))
 	_append_log("info", "已复制 %d 条日志" % lines.size())
+	_toast("已复制 %d 条日志" % lines.size())
 
 
 func _clear_log() -> void:
 	_log_entries.clear()
 	if _log_view != null:
 		_log_view.clear()
+	_toast("日志已清空")
 
 
 # ---------------------------------------------------------------------------
