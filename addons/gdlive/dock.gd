@@ -147,6 +147,8 @@ var _cert_quick_button: Button
 var _settings_box: VBoxContainer
 var _settings_toggle: Button
 var _settings_summary: Label
+# UI language selector: auto (follow OS locale) / Chinese / English.
+var _language_option: OptionButton
 var _state_hint: Label
 var _export_progress: ProgressBar
 var _export_started_ms := 0
@@ -248,8 +250,16 @@ var _zh := false
 
 func _ready() -> void:
 	# UI language: Chinese only for Chinese system locales; every other
-	# locale gets English. Must run before `_build_ui` creates labels.
+	# locale gets English. The saved `language` setting (auto/zh/en) overrides
+	# the OS locale. Must run before `_build_ui` creates labels.
 	_zh = OS.get_locale().to_lower().begins_with("zh")
+	var lang_cfg := ConfigFile.new()
+	if lang_cfg.load(CFG_PATH) == OK:
+		match str(lang_cfg.get_value("gtlive", "language", "auto")):
+			"zh":
+				_zh = true
+			"en":
+				_zh = false
 	# Fallback for editor versions that name the dock after adding it.
 	name = "GDLive"
 	_build_ui()
@@ -573,6 +583,21 @@ func _build_ui() -> void:
 		_update_settings_summary()
 	)
 	grid.add_child(_host)
+
+	# Bilingual by design so the setting stays readable no matter which
+	# language the UI is currently in. Takes effect after plugin reload.
+	grid.add_child(_label("界面语言 / Language"))
+	_language_option = OptionButton.new()
+	_language_option.add_item("自动 · Auto", 0)
+	_language_option.add_item("中文", 1)
+	_language_option.add_item("English", 2)
+	_language_option.selected = 0
+	_language_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_language_option.item_selected.connect(func(_index):
+		_save_settings()
+		_toast(_t("界面语言已切换，重新加载插件后生效"))
+	)
+	grid.add_child(_language_option)
 
 	_settings_box.add_child(_section(_t("选项")))
 
@@ -3314,6 +3339,9 @@ func _load_settings() -> void:
 		cfg.save(CFG_PATH)
 	_port.value = float(saved_port)
 	_host.selected = int(cfg.get_value("gtlive", "host_index", 0))
+	var lang := str(cfg.get_value("gtlive", "language", "auto"))
+	if _language_option != null:
+		_language_option.selected = maxi(["auto", "zh", "en"].find(lang), 0)
 	_auto_export.button_pressed = bool(cfg.get_value("gtlive", "auto_export", true))
 	_auto_reload.button_pressed = bool(cfg.get_value("gtlive", "auto_reload", true))
 	_watch.button_pressed = bool(cfg.get_value("gtlive", "watch", true))
@@ -3349,6 +3377,8 @@ func _save_settings() -> void:
 	cfg.set_value("gtlive", "port", int(_port.value))
 	cfg.set_value("gtlive", "port_migrated", true)
 	cfg.set_value("gtlive", "host_index", _host.selected)
+	if _language_option != null:
+		cfg.set_value("gtlive", "language", ["auto", "zh", "en"][_language_option.selected])
 	cfg.set_value("gtlive", "auto_export", _auto_export.button_pressed)
 	cfg.set_value("gtlive", "auto_reload", _auto_reload.button_pressed)
 	cfg.set_value("gtlive", "watch", _watch.button_pressed)
@@ -3627,6 +3657,7 @@ const I18N_EN: Dictionary = {
 	"无法获取 Godot 可执行文件路径，导出可能失败": "Can't locate the Godot executable; export may fail",
 	"日志": "Logs",
 	"日志已清空": "Logs cleared",
+	"界面语言已切换，重新加载插件后生效": "Language changed — reload the plugin to apply",
 	"显示 IPv6 地址": "Show IPv6 addresses",
 	"有效期至 %s": "Valid until %s",
 	"服务器已停止": "Server stopped",
