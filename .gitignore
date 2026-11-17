@@ -9,3 +9,6 @@ Thumbs.db
 
 # 截图不会被 Godot 导入
 docs/screenshots/*.import
+
+# 发行包（直接传 GitHub Releases，不进 git）
+dist/
