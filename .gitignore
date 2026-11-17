@@ -6,3 +6,6 @@ godot/.godot/
 # 系统杂项
 .DS_Store
 Thumbs.db
+
+# 截图不会被 Godot 导入
+docs/screenshots/*.import

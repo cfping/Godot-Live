@@ -23,6 +23,7 @@ const LEVEL_COLORS := {
 	"debug": "#6e7681",
 	"export": "#5fb2e8",
 	"browser": "#a685f5",
+	"net": "#79b8ff",
 	"success": "#37d0a0",
 }
 
@@ -141,6 +142,9 @@ var _log_filter := 0
 var _log_autoscroll := true
 var _log_filter_option: OptionButton
 var _log_autoscroll_check: CheckBox
+var _cmd_input: LineEdit
+var _cmd_history: Array[String] = []
+var _cmd_history_index := -1
 var _donate_qr_wechat: TextureRect
 var _donate_qr_alipay: TextureRect
 var _donate_loaded := false
@@ -722,8 +726,10 @@ func _build_ui() -> void:
 	_log_filter_option.add_item("全部", 0)
 	_log_filter_option.add_item("警告+错误", 1)
 	_log_filter_option.add_item("导出", 2)
+	_log_filter_option.add_item("网络", 3)
 	_log_filter_option.item_selected.connect(_on_log_filter_changed)
 	_log_toolbar.add_child(_log_filter_option)
+	_log_toolbar.add_child(_button("📷 截图", _on_shot_request))
 	_log_toolbar.add_child(_button("复制", _copy_log))
 	_log_toolbar.add_child(_button("清空", func(): _clear_log()))
 
@@ -749,6 +755,18 @@ func _build_ui() -> void:
 		_log_view.add_theme_font_override("normal_font", _ed_mono)
 	_log_view.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	logs.add_child(_log_view)
+
+	# Remote command row: evaluate a JS expression in every connected page.
+	var cmd_row := HBoxContainer.new()
+	logs.add_child(cmd_row)
+	_cmd_input = LineEdit.new()
+	_cmd_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cmd_input.placeholder_text = "远程指令：输入 JavaScript 表达式发送到已连接的页面（↑↓ 翻历史）"
+	_cmd_input.text_submitted.connect(_on_cmd_submitted)
+	_cmd_input.gui_input.connect(_on_cmd_gui_input)
+	cmd_row.add_child(_cmd_input)
+	var cmd_button := _button("执行", func(): _on_cmd_submitted(_cmd_input.text))
+	cmd_row.add_child(cmd_button)
 
 	# ===================== tab: 远程 ======================================
 	var remote := _make_tab("远程")
@@ -1417,6 +1435,7 @@ func _connect_server() -> void:
 		return
 	server.log.connect(_on_log)
 	server.browser_log.connect(_on_browser_log)
+	server.screenshot.connect(_on_screenshot)
 	server.clients_changed.connect(_on_clients_changed)
 	server.files_changed.connect(_on_files_changed)
 	server.export_started.connect(_on_export_started)
@@ -1511,6 +1530,78 @@ func _on_reload_clients() -> void:
 		return
 	var count: int = int(server.reload_clients())
 	_append_log("info", "已推送刷新到 %d 个页面" % count)
+
+
+func _on_shot_request() -> void:
+	if server == null or not bool(server.is_running()):
+		_append_log("warn", "服务器未运行，无法请求截图")
+		return
+	var result := String(server.request_shots())
+	if result.begins_with("ERROR::"):
+		_append_log("error", result.trim_prefix("ERROR::"))
+		return
+	var count := result.to_int()
+	if count <= 0:
+		_append_log("warn", "没有已连接的页面，截图请求未送达（先在浏览器/手机打开游戏）")
+	else:
+		_append_log("info", "已向 %d 个页面请求截图，等待回传…" % count)
+
+
+func _on_screenshot(uid: String, png_base64: String) -> void:
+	var png := Marshalls.base64_to_raw(png_base64)
+	if png.is_empty():
+		_append_log("error", "截图 %s 解码失败" % uid)
+		return
+	var image := Image.new()
+	var err := image.load_png_from_buffer(png)
+	if err != OK:
+		_append_log("error", "截图 %s 不是有效的 PNG（%s）" % [uid, error_string(err)])
+		return
+	var dir_path := ProjectSettings.globalize_path("res://gdlive-shots")
+	DirAccess.make_dir_recursive_absolute(dir_path)
+	var stamp := Time.get_datetime_string_from_system(false, true).replace(":", "-")
+	var file_path := "%s/gdlive-shot-%s-%s.png" % [dir_path, uid, stamp]
+	err = image.save_png(file_path)
+	if err != OK:
+		_append_log("error", "截图保存失败：%s（%s）" % [file_path, error_string(err)])
+		return
+	_append_log("success", "已保存截图 → %s（%d×%d）" % [file_path, image.get_width(), image.get_height()])
+
+
+func _on_cmd_submitted(text: String) -> void:
+	var expr := text.strip_edges()
+	if expr == "":
+		return
+	if server == null or not bool(server.is_running()):
+		_append_log("warn", "服务器未运行，指令未发送")
+		return
+	var result := String(server.send_command(expr))
+	if result.begins_with("ERROR::"):
+		_append_log("error", result.trim_prefix("ERROR::"))
+		return
+	_append_log("info", "[cmd] 已发送到 %s 个页面：%s" % [result, expr])
+	_cmd_history.push_front(expr)
+	if _cmd_history.size() > 20:
+		_cmd_history.resize(20)
+	_cmd_history_index = -1
+	_save_settings()
+
+
+func _on_cmd_gui_input(event: InputEvent) -> void:
+	if _cmd_history.is_empty():
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_UP:
+			_cmd_history_index = mini(_cmd_history_index + 1, _cmd_history.size() - 1)
+			_cmd_input.text = _cmd_history[_cmd_history_index]
+			_cmd_input.caret_column = _cmd_input.text.length()
+		elif event.keycode == KEY_DOWN and _cmd_history_index >= 0:
+			_cmd_history_index -= 1
+			if _cmd_history_index < 0:
+				_cmd_input.text = ""
+			else:
+				_cmd_input.text = _cmd_history[_cmd_history_index]
+				_cmd_input.caret_column = _cmd_input.text.length()
 
 
 # ---------------------------------------------------------------------------
@@ -2813,6 +2904,8 @@ func _log_matches(entry: Dictionary) -> bool:
 			return entry.level == "warn" or entry.level == "error"
 		2:
 			return entry.level == "export"
+		3:
+			return entry.level == "net"
 		_:
 			return true
 
@@ -2903,6 +2996,10 @@ func _load_settings() -> void:
 	_log_autoscroll_check.button_pressed = _log_autoscroll
 	_log_view.scroll_following = _log_autoscroll
 	_show_v6.button_pressed = bool(cfg.get_value("gtlive", "show_v6", false))
+	_cmd_history.clear()
+	for item in PackedStringArray(cfg.get_value("gtlive", "cmd_history", PackedStringArray())):
+		_cmd_history.append(str(item))
+	_cmd_history_index = -1
 	if _remote_ttl != null:
 		_remote_ttl.selected = clampi(int(cfg.get_value("gtlive", "remote_ttl", 0)), 0, _remote_ttl.item_count - 1)
 	if _remote_custom_input != null:
@@ -2929,6 +3026,7 @@ func _save_settings() -> void:
 	cfg.set_value("gtlive", "log_filter", _log_filter)
 	cfg.set_value("gtlive", "log_autoscroll", _log_autoscroll)
 	cfg.set_value("gtlive", "show_v6", _show_v6.button_pressed)
+	cfg.set_value("gtlive", "cmd_history", PackedStringArray(_cmd_history))
 	if _remote_ttl != null:
 		cfg.set_value("gtlive", "remote_ttl", _remote_ttl.selected)
 	if _remote_custom_input != null:
