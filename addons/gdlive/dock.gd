@@ -283,11 +283,11 @@ func boot() -> void:
 	_refresh_license()
 	_load_donate_images()
 
-	_append_log("info", _t("GDLive 就绪"))
-	_append_log("debug", _t("项目: %s") % _project_dir)
-	_append_log("debug", _t("导出: %s") % _out_dir)
+	_append_log("info", _t("header.ready"))
+	_append_log("debug", _t("header.project") % _project_dir)
+	_append_log("debug", _t("header.export_dir") % _out_dir)
 	if _godot_bin == "":
-		_append_log("warn", _t("无法获取 Godot 可执行文件路径，导出可能失败"))
+		_append_log("warn", _t("log.no_godot_bin"))
 
 	if _auto_start.button_pressed:
 		_start_server()
@@ -400,7 +400,7 @@ func _build_ui() -> void:
 	header.add_child(title)
 
 	var version := Label.new()
-	version.text = _t("web 内网调试")
+	version.text = _t("header.subtitle")
 	version.add_theme_color_override("font_color", _ed_dim)
 	version.add_theme_font_size_override("font_size", 11)
 	header.add_child(version)
@@ -411,14 +411,14 @@ func _build_ui() -> void:
 	_license_badge.focus_mode = Control.FOCUS_NONE
 	_license_badge.text = "FREE"
 	_license_badge.add_theme_font_size_override("font_size", 10)
-	_license_badge.tooltip_text = _t("授权状态 / 升级 Pro")
+	_license_badge.tooltip_text = _t("header.license_badge")
 	_license_badge.pressed.connect(func(): _tabs.current_tab = _tab_support)
 	header.add_child(_license_badge)
 
 	var heart := Button.new()
 	heart.text = "♥"
 	heart.flat = true
-	heart.tooltip_text = _t("赞赏支持 GDLive")
+	heart.tooltip_text = _t("header.donate_tooltip")
 	heart.custom_minimum_size = Vector2(24, 0)
 	heart.pressed.connect(func(): _tabs.current_tab = _tab_support)
 	header.add_child(heart)
@@ -426,7 +426,7 @@ func _build_ui() -> void:
 	var mail_quick := Button.new()
 	mail_quick.text = "✉"
 	mail_quick.flat = true
-	mail_quick.tooltip_text = _t("邮件联系我们（购买 / 续费 / 发票 / 换机）")
+	mail_quick.tooltip_text = _t("header.email_tooltip")
 	mail_quick.custom_minimum_size = Vector2(24, 0)
 	mail_quick.pressed.connect(_open_email_dialog)
 	header.add_child(mail_quick)
@@ -434,7 +434,7 @@ func _build_ui() -> void:
 	var help := Button.new()
 	help.text = "?"
 	help.flat = true
-	help.tooltip_text = _t("使用引导")
+	help.tooltip_text = _t("common.quick_start")
 	help.custom_minimum_size = Vector2(24, 0)
 	help.pressed.connect(_show_onboarding)
 	header.add_child(help)
@@ -449,28 +449,28 @@ func _build_ui() -> void:
 	quick.add_theme_constant_override("separation", 6)
 	add_child(quick)
 
-	_start_button = _button(_t("启动"), _on_toggle)
+	_start_button = _button(_t("common.start"), _on_toggle)
 	_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_style_primary(_start_button)
 	quick.add_child(_start_button)
 
-	_export_button = _button(_t("导出"), _on_export)
+	_export_button = _button(_t("common.export"), _on_export)
 	_export_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_style_primary(_export_button)
 	quick.add_child(_export_button)
 
-	_open_quick_button = _button(_t("打开"), _on_open)
+	_open_quick_button = _button(_t("common.open"), _on_open)
 	_open_quick_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	quick.add_child(_open_quick_button)
 
-	_cert_quick_button = _button(_t("证书"), func(): _tabs.current_tab = _tab_cert)
+	_cert_quick_button = _button(_t("common.cert_short"), func(): _tabs.current_tab = _tab_cert)
 	_cert_quick_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cert_quick_button.tooltip_text = _t("根证书安装 / 手机扫码")
+	_cert_quick_button.tooltip_text = _t("cert.title")
 	quick.add_child(_cert_quick_button)
 
-	_start_button.tooltip_text = _t("启动 / 停止本地服务器")
-	_export_button.tooltip_text = _t("执行一次 headless Web 导出")
-	_open_quick_button.tooltip_text = _t("用浏览器打开当前局域网地址")
+	_start_button.tooltip_text = _t("summary.start_stop")
+	_export_button.tooltip_text = _t("summary.export_once")
+	_open_quick_button.tooltip_text = _t("summary.open_lan")
 
 	_export_progress = ProgressBar.new()
 	_export_progress.indeterminate = true
@@ -528,7 +528,7 @@ func _build_ui() -> void:
 	add_child(_remote_tick_timer)
 
 	# ===================== tab: 调试 ======================================
-	var run := _make_tab(_t("调试"))
+	var run := _make_tab(_t("tab.debug"))
 
 	var settings_head := HBoxContainer.new()
 	run.add_child(settings_head)
@@ -536,8 +536,8 @@ func _build_ui() -> void:
 	_settings_toggle = Button.new()
 	_settings_toggle.flat = true
 	_settings_toggle.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_settings_toggle.text = _t("▾ 服务设置")
-	_settings_toggle.tooltip_text = _t("端口 / 监听地址 / 自动化选项")
+	_settings_toggle.text = _t("settings.toggle")
+	_settings_toggle.tooltip_text = _t("summary.settings_tooltip")
 	_settings_toggle.pressed.connect(_toggle_settings)
 	settings_head.add_child(_settings_toggle)
 
@@ -560,7 +560,7 @@ func _build_ui() -> void:
 	grid.add_theme_constant_override("h_separation", 10)
 	_settings_box.add_child(grid)
 
-	grid.add_child(_label(_t("端口")))
+	grid.add_child(_label(_t("settings.port")))
 	_port = SpinBox.new()
 	_port.min_value = 1
 	_port.max_value = 65535
@@ -573,10 +573,10 @@ func _build_ui() -> void:
 	)
 	grid.add_child(_port)
 
-	grid.add_child(_label(_t("监听地址")))
+	grid.add_child(_label(_t("settings.listen_addr")))
 	_host = OptionButton.new()
-	_host.add_item(_t("0.0.0.0 · 局域网"), 0)
-	_host.add_item(_t("127.0.0.1 · 仅本机"), 1)
+	_host.add_item(_t("settings.host_lan"), 0)
+	_host.add_item(_t("settings.host_local"), 1)
 	_host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_host.item_selected.connect(func(_index):
 		_save_settings()
@@ -595,41 +595,41 @@ func _build_ui() -> void:
 	_language_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_language_option.item_selected.connect(func(_index):
 		_save_settings()
-		_toast(_t("界面语言已切换，重新加载插件后生效"))
+		_toast(_t("lang.changed_toast"))
 	)
 	grid.add_child(_language_option)
 
-	_settings_box.add_child(_section(_t("选项")))
+	_settings_box.add_child(_section(_t("settings.options")))
 
-	_auto_export = _check(_t("自动导出"), true)
-	_auto_export.tooltip_text = _t("监听项目文件，变更后自动执行 headless 导出")
-	_auto_reload = _check(_t("自动刷新"), true)
-	_auto_reload.tooltip_text = _t("导出成功后通知所有打开的页面刷新")
-	_watch = _check(_t("监听文件"), true)
-	_watch.tooltip_text = _t("关闭后只能手动导出")
-	_tls = _check(_t("HTTPS（线程版）"), false)
-	_tls.tooltip_text = _t("自签根 CA + TLS；线程版 Web 构建需要（SharedArrayBuffer）")
-	_auto_start = _check(_t("自动启动"), true)
-	_auto_start.tooltip_text = _t("打开编辑器时自动启动服务器")
-	_debug_overlay = _check(_t("远程调试面板"), true)
-	_debug_overlay.tooltip_text = _t("在页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令）；关闭后页面不再被注入，已打开的页面刷新后生效")
+	_auto_export = _check(_t("settings.auto_export"), true)
+	_auto_export.tooltip_text = _t("settings.auto_export_tip")
+	_auto_reload = _check(_t("settings.auto_reload"), true)
+	_auto_reload.tooltip_text = _t("settings.auto_reload_tip")
+	_watch = _check(_t("settings.watch"), true)
+	_watch.tooltip_text = _t("settings.watch_tip")
+	_tls = _check(_t("settings.https"), false)
+	_tls.tooltip_text = _t("settings.https_tip")
+	_auto_start = _check(_t("settings.auto_start"), true)
+	_auto_start.tooltip_text = _t("settings.auto_start_tip")
+	_debug_overlay = _check(_t("settings.debug_overlay"), true)
+	_debug_overlay.tooltip_text = _t("settings.debug_overlay_tip")
 	for box in [_auto_export, _auto_reload, _watch, _tls, _auto_start, _debug_overlay]:
 		_settings_box.add_child(box)
 		box.toggled.connect(func(_pressed): _on_option_changed())
 	_debug_overlay.toggled.connect(
 		func(pressed: bool):
-			_toast(_t("远程调试面板已") + (_t("开启，页面刷新后生效") if pressed else _t("关闭")))
+			_toast(_t("toast.debug_overlay_prefix") + (_t("toast.debug_overlay_on") if pressed else _t("onboard.close")))
 	)
 
-	run.add_child(_section(_t("局域网地址")))
+	run.add_child(_section(_t("debug.lan_addrs")))
 
 	var ip_filter_row := HBoxContainer.new()
 	run.add_child(ip_filter_row)
 	var ip_filter_spacer := Control.new()
 	ip_filter_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ip_filter_row.add_child(ip_filter_spacer)
-	_show_v6 = _check(_t("显示 IPv6 地址"), false)
-	_show_v6.tooltip_text = _t("服务器默认监听 IPv4（0.0.0.0）；勾选后同时列出本机可用的 IPv6 地址（需路由器与手机支持 IPv6 才能访问）")
+	_show_v6 = _check(_t("settings.show_v6"), false)
+	_show_v6.tooltip_text = _t("settings.show_v6_tip")
 	_show_v6.toggled.connect(func(_pressed): _save_settings(); _refresh_status())
 	ip_filter_row.add_child(_show_v6)
 
@@ -648,7 +648,7 @@ func _build_ui() -> void:
 	run.add_child(_url_list)
 
 	var qr_hint := Label.new()
-	qr_hint.text = _t("手机扫码打开游戏")
+	qr_hint.text = _t("debug.scan_hint")
 	qr_hint.add_theme_font_size_override("font_size", 10)
 	qr_hint.add_theme_color_override("font_color", _ed_dim)
 	run.add_child(qr_hint)
@@ -672,21 +672,21 @@ func _build_ui() -> void:
 
 	var open_row := HBoxContainer.new()
 	run.add_child(open_row)
-	_open_button = _button(_t("浏览器打开"), _on_open)
+	_open_button = _button(_t("debug.open_browser"), _on_open)
 	_open_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	open_row.add_child(_open_button)
-	_copy_button = _button(_t("复制地址"), _on_copy_url)
+	_copy_button = _button(_t("common.copy_address"), _on_copy_url)
 	_copy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	open_row.add_child(_copy_button)
-	_debug_page_button = _button(_t("调试页"), _on_open_debug_page)
+	_debug_page_button = _button(_t("debug.open_debug_page"), _on_open_debug_page)
 	_debug_page_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	open_row.add_child(_debug_page_button)
-	var qr_page_button := _button(_t("二维码"), _on_open_qr_page)
+	var qr_page_button := _button(_t("debug.qr_button"), _on_open_qr_page)
 	qr_page_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	qr_page_button.tooltip_text = _t("打开大图二维码页面（游戏 / 证书 / 赞赏）")
+	qr_page_button.tooltip_text = _t("debug.qr_tooltip")
 	open_row.add_child(qr_page_button)
 
-	run.add_child(_section(_t("导出预设")))
+	run.add_child(_section(_t("debug.preset")))
 	var preset_row := HBoxContainer.new()
 	run.add_child(preset_row)
 	_preset_label = Label.new()
@@ -694,26 +694,26 @@ func _build_ui() -> void:
 	_preset_label.add_theme_font_size_override("font_size", 12)
 	_preset_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	preset_row.add_child(_preset_label)
-	_preset_button = _button(_t("创建 Web 预设"), _on_create_preset)
+	_preset_button = _button(_t("debug.create_preset"), _on_create_preset)
 	preset_row.add_child(_preset_button)
-	var export_dir_button := _button(_t("目录"), _on_open_export_dir)
-	export_dir_button.tooltip_text = _t("打开导出目录")
+	var export_dir_button := _button(_t("debug.folder"), _on_open_export_dir)
+	export_dir_button.tooltip_text = _t("debug.open_export_dir")
 	preset_row.add_child(export_dir_button)
 
 	var hint := Label.new()
-	hint.text = _t("手机首次调试：切到「证书安装」标签页，扫描安装二维码。")
+	hint.text = _t("debug.first_phone_hint")
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 10)
 	hint.add_theme_color_override("font_color", _ed_dim)
 	run.add_child(hint)
 
 	# ===================== tab: 证书安装 ==================================
-	var cert := _make_tab(_t("证书安装"))
+	var cert := _make_tab(_t("tab.cert"))
 
-	cert.add_child(_section(_t("本机根 CA · 所有项目共用")))
+	cert.add_child(_section(_t("cert.subtitle")))
 
 	_ca_pro_hint = Label.new()
-	_ca_pro_hint.text = _t("HTTPS / 根证书是 Pro 功能，激活后可用。")
+	_ca_pro_hint.text = _t("hint.https_pro")
 	_ca_pro_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_ca_pro_hint.add_theme_font_size_override("font_size", 10)
 	_ca_pro_hint.add_theme_color_override("font_color", _ed_warning)
@@ -730,7 +730,7 @@ func _build_ui() -> void:
 	cert.add_child(_ca_label)
 
 	var ca_scope := Label.new()
-	ca_scope.text = _t("「安装到本机」只影响这台电脑；手机 / 平板请扫下方二维码打开安装页。")
+	ca_scope.text = _t("cert.install_hint")
 	ca_scope.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ca_scope.add_theme_font_size_override("font_size", 10)
 	ca_scope.add_theme_color_override("font_color", _ed_dim)
@@ -741,7 +741,7 @@ func _build_ui() -> void:
 	cert.add_child(_ca_mobile_box)
 
 	var ca_qr_hint := Label.new()
-	ca_qr_hint.text = _t("手机扫码打开安装页（HTTP，免证书警告）")
+	ca_qr_hint.text = _t("cert.scan_hint")
 	ca_qr_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ca_qr_hint.add_theme_font_size_override("font_size", 10)
 	ca_qr_hint.add_theme_color_override("font_color", _ed_dim)
@@ -757,7 +757,7 @@ func _build_ui() -> void:
 	_ca_qr = QR_VIEW.new()
 	ca_qr_box.add_child(_ca_qr)
 	_ca_qr_placeholder = Label.new()
-	_ca_qr_placeholder.text = _t("二维码待生成")
+	_ca_qr_placeholder.text = _t("cert.qr_pending")
 	_ca_qr_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_ca_qr_placeholder.add_theme_font_size_override("font_size", 11)
 	_ca_qr_placeholder.add_theme_color_override("font_color", _ed_dim)
@@ -772,43 +772,43 @@ func _build_ui() -> void:
 
 	var ca_row_a := HBoxContainer.new()
 	cert.add_child(ca_row_a)
-	_ca_guide_button = _button(_t("打开完整安装页"), _on_open_ca_guide)
+	_ca_guide_button = _button(_t("cert.open_full_page"), _on_open_ca_guide)
 	_ca_guide_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ca_row_a.add_child(_ca_guide_button)
-	_ca_copy_button = _button(_t("复制地址"), _on_copy_ca_page)
+	_ca_copy_button = _button(_t("common.copy_address"), _on_copy_ca_page)
 	_ca_copy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ca_row_a.add_child(_ca_copy_button)
 
 	var ca_row_b := HBoxContainer.new()
 	cert.add_child(ca_row_b)
-	_ca_install_button = _button(_t("安装到本机"), _on_install_ca)
+	_ca_install_button = _button(_t("cert.install_local"), _on_install_ca)
 	_ca_install_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_ca_install_button.tooltip_text = _t("macOS 登录钥匙串 / Windows 用户 Root / Linux p11-kit")
+	_ca_install_button.tooltip_text = _t("cert.stores")
 	ca_row_b.add_child(_ca_install_button)
-	_ca_trust_button = _button(_t("重新检测信任"), _on_check_trust)
+	_ca_trust_button = _button(_t("cert.recheck"), _on_check_trust)
 	_ca_trust_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ca_row_b.add_child(_ca_trust_button)
 
 	var ca_row_c := HBoxContainer.new()
 	cert.add_child(ca_row_c)
-	_ca_dir_button = _button(_t("证书目录"), _on_open_ca_dir)
+	_ca_dir_button = _button(_t("cert.folder"), _on_open_ca_dir)
 	_ca_dir_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ca_row_c.add_child(_ca_dir_button)
-	_ca_rotate_button = _button(_t("重新生成 CA"), _on_rotate_ca)
+	_ca_rotate_button = _button(_t("cert.regenerate"), _on_rotate_ca)
 	_ca_rotate_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ca_row_c.add_child(_ca_rotate_button)
 
-	_ca_generate_button = _button(_t("生成根证书"), _on_generate_ca)
+	_ca_generate_button = _button(_t("cert.generate"), _on_generate_ca)
 	_ca_generate_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cert.add_child(_ca_generate_button)
 
-	_ca_prompt_check = _check(_t("启动时检查并提示安装根证书"), true)
+	_ca_prompt_check = _check(_t("cert.check_on_start"), true)
 	cert.add_child(_ca_prompt_check)
 	_ca_prompt_check.toggled.connect(func(_pressed): _save_settings())
 
 	var web_hint := Label.new()
 	web_hint.text = (
-		_t("所有平台的下载、安装步骤、验证与移除说明都在安装页里：手机扫码或点「打开完整安装页」。")
+		_t("cert.full_hint")
 	)
 	web_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	web_hint.add_theme_font_size_override("font_size", 10)
@@ -816,7 +816,7 @@ func _build_ui() -> void:
 	cert.add_child(web_hint)
 
 	var ca_warn := Label.new()
-	ca_warn.text = _t("仅用于受控开发机；私钥 ca-key.pem 不要分享。")
+	ca_warn.text = _t("cert.private_key_warning")
 	ca_warn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ca_warn.add_theme_font_size_override("font_size", 10)
 	ca_warn.add_theme_color_override("font_color", _ed_warning)
@@ -827,10 +827,10 @@ func _build_ui() -> void:
 	logs.name = "tab_logs"
 	logs.add_theme_constant_override("separation", 6)
 	_tabs.add_child(logs)
-	_tabs.set_tab_title(_tabs.get_tab_count() - 1, _t("日志"))
+	_tabs.set_tab_title(_tabs.get_tab_count() - 1, _t("tab.logs"))
 
 	_log_pro_hint = Label.new()
-	_log_pro_hint.text = _t("浏览器日志回传 / 页面内调试面板是 Pro 功能，激活后重启服务器生效。")
+	_log_pro_hint.text = _t("hint.overlay_pro")
 	_log_pro_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_log_pro_hint.add_theme_font_size_override("font_size", 10)
 	_log_pro_hint.add_theme_color_override("font_color", _ed_warning)
@@ -838,30 +838,30 @@ func _build_ui() -> void:
 
 	_log_toolbar = HBoxContainer.new()
 	logs.add_child(_log_toolbar)
-	var log_title := _label(_t("日志"))
+	var log_title := _label(_t("tab.logs"))
 	log_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_log_toolbar.add_child(log_title)
 
 	_log_filter_option = OptionButton.new()
-	_log_filter_option.add_item(_t("全部"), 0)
-	_log_filter_option.add_item(_t("警告+错误"), 1)
-	_log_filter_option.add_item(_t("导出"), 2)
-	_log_filter_option.add_item(_t("网络"), 3)
+	_log_filter_option.add_item(_t("logs.filter_all"), 0)
+	_log_filter_option.add_item(_t("logs.filter_warnings"), 1)
+	_log_filter_option.add_item(_t("common.export"), 2)
+	_log_filter_option.add_item(_t("logs.filter_network"), 3)
 	_log_filter_option.item_selected.connect(_on_log_filter_changed)
 	_log_toolbar.add_child(_log_filter_option)
-	_log_toolbar.add_child(_button(_t("📷 截图"), _on_shot_request))
-	_log_toolbar.add_child(_button(_t("复制"), _copy_log))
-	_log_toolbar.add_child(_button(_t("清空"), func(): _clear_log()))
+	_log_toolbar.add_child(_button(_t("logs.screenshot"), _on_shot_request))
+	_log_toolbar.add_child(_button(_t("common.copy"), _copy_log))
+	_log_toolbar.add_child(_button(_t("common.clear"), func(): _clear_log()))
 
 	var log_row2 := HBoxContainer.new()
 	logs.add_child(log_row2)
-	_log_autoscroll_check = _check(_t("自动滚动"), true)
+	_log_autoscroll_check = _check(_t("logs.autoscroll"), true)
 	_log_autoscroll_check.toggled.connect(_on_log_autoscroll)
 	log_row2.add_child(_log_autoscroll_check)
 	var log_spacer := Control.new()
 	log_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	log_row2.add_child(log_spacer)
-	log_row2.add_child(_button(_t("刷新页面"), _on_reload_clients))
+	log_row2.add_child(_button(_t("logs.refresh_pages"), _on_reload_clients))
 
 	_log_view = RichTextLabel.new()
 	_log_view.bbcode_enabled = true
@@ -881,17 +881,17 @@ func _build_ui() -> void:
 	logs.add_child(cmd_row)
 	_cmd_input = LineEdit.new()
 	_cmd_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cmd_input.placeholder_text = _t("远程指令：输入 JavaScript 表达式发送到已连接的页面（↑↓ 翻历史）")
+	_cmd_input.placeholder_text = _t("logs.cmd_placeholder")
 	_cmd_input.text_submitted.connect(_on_cmd_submitted)
 	_cmd_input.gui_input.connect(_on_cmd_gui_input)
 	cmd_row.add_child(_cmd_input)
-	var cmd_button := _button(_t("执行"), func(): _on_cmd_submitted(_cmd_input.text))
+	var cmd_button := _button(_t("common.run"), func(): _on_cmd_submitted(_cmd_input.text))
 	cmd_row.add_child(cmd_button)
 
 	# ===================== tab: 远程 ======================================
-	var remote := _make_tab(_t("远程"))
+	var remote := _make_tab(_t("tab.remote"))
 
-	remote.add_child(_section(_t("远程试玩")))
+	remote.add_child(_section(_t("remote.title")))
 
 	# The relay address is baked into the plugin; only the duration is
 	# user-selectable here.
@@ -900,32 +900,32 @@ func _build_ui() -> void:
 	_remote_ttl = OptionButton.new()
 	# Durations are rebuilt per tier in _update_remote_limits(); kept in
 	# sync with the ttl mapping in _on_remote_start.
-	_remote_ttl.add_item(_t("15 分钟"), 2)
+	_remote_ttl.add_item(_t("remote.ttl_15m"), 2)
 	_remote_ttl.selected = 2
 	ttl_row.add_child(_remote_ttl)
 
 	var remote_pw_row := HBoxContainer.new()
 	remote.add_child(remote_pw_row)
 	_remote_password_input = LineEdit.new()
-	_remote_password_input.placeholder_text = _t("访问密码（可选）")
+	_remote_password_input.placeholder_text = _t("remote.password")
 	_remote_password_input.secret = true
 	_remote_password_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_remote_password_input.add_theme_stylebox_override("normal", _card_style(_ed_dark3, _ed_dark2, 2, 10))
 	remote_pw_row.add_child(_remote_password_input)
 
 	_remote_custom_input = LineEdit.new()
-	_remote_custom_input.placeholder_text = _t("自定义域名（Studio），如 demo.studio.example.com")
+	_remote_custom_input.placeholder_text = _t("remote.custom_domain")
 	_remote_custom_input.visible = false
 	_remote_custom_input.add_theme_stylebox_override("normal", _card_style(_ed_dark3, _ed_dark2, 2, 10))
 	remote.add_child(_remote_custom_input)
 
 	var remote_buttons := HBoxContainer.new()
 	remote.add_child(remote_buttons)
-	_remote_start_button = _button(_t("开始远程试玩"), _on_remote_start)
+	_remote_start_button = _button(_t("remote.start"), _on_remote_start)
 	_remote_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_style_primary(_remote_start_button)
 	remote_buttons.add_child(_remote_start_button)
-	_remote_stop_button = _button(_t("停止"), _on_remote_stop)
+	_remote_stop_button = _button(_t("common.stop"), _on_remote_stop)
 	_remote_stop_button.disabled = true
 	remote_buttons.add_child(_remote_stop_button)
 
@@ -946,21 +946,21 @@ func _build_ui() -> void:
 
 	var remote_action_row := HBoxContainer.new()
 	remote.add_child(remote_action_row)
-	_remote_copy_button = _button(_t("复制地址"), _on_remote_copy)
+	_remote_copy_button = _button(_t("common.copy_address"), _on_remote_copy)
 	_remote_copy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_remote_copy_button.disabled = true
 	remote_action_row.add_child(_remote_copy_button)
-	_remote_open_button = _button(_t("打开浏览器"), _on_remote_open)
+	_remote_open_button = _button(_t("common.open_browser"), _on_remote_open)
 	_remote_open_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_remote_open_button.disabled = true
 	remote_action_row.add_child(_remote_open_button)
 
 	# ===================== tab: 支持 / 授权 ===============================
-	var support := _make_tab(_t("支持"))
+	var support := _make_tab(_t("tab.support"))
 
 	# --- 授权状态 -------------------------------------------------------
 	var status_card := _card(support, _ed_dark1, Color(_ed_accent, 0.30), 3, 11)
-	status_card.add_child(_section(_t("授权状态")))
+	status_card.add_child(_section(_t("support.status_title")))
 	_license_status_label = Label.new()
 	_license_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_license_status_label.add_theme_font_size_override("font_size", 14)
@@ -983,33 +983,33 @@ func _build_ui() -> void:
 	if _ed_mono != null:
 		_license_machine_label.add_theme_font_override("font", _ed_mono)
 	machine_row.add_child(_license_machine_label)
-	var copy_machine := _button(_t("复制机器码"), _on_copy_machine)
-	copy_machine.tooltip_text = _t("复制本机机器码，购买 / 换机时发给我们")
+	var copy_machine := _button(_t("common.copy_machine"), _on_copy_machine)
+	copy_machine.tooltip_text = _t("support.copy_machine_tooltip")
 	copy_machine.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	machine_row.add_child(copy_machine)
 
 	var license_row := HBoxContainer.new()
 	_license_row = license_row
 	status_card.add_child(license_row)
-	_buy_button = _button(_t("购买 / 升级 Pro"), _on_open_pro_page)
+	_buy_button = _button(_t("buy.title"), _on_open_pro_page)
 	_buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_style_gold(_buy_button)
 	license_row.add_child(_buy_button)
-	_remove_license_button = _button(_t("移除本机授权"), _on_remove_license)
+	_remove_license_button = _button(_t("support.remove_license"), _on_remove_license)
 	_remove_license_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_remove_license_button.tooltip_text = _t("退出 Pro 并清除本机授权（会二次确认）")
+	_remove_license_button.tooltip_text = _t("support.remove_tooltip")
 	license_row.add_child(_remove_license_button)
 
 	# --- 激活授权码 -----------------------------------------------------
 	# Hidden entirely once a license is active (see _refresh_license).
 	_activate_card = _card(support)
 	var activate_card := _activate_card
-	activate_card.add_child(_section(_t("激活授权码")))
+	activate_card.add_child(_section(_t("activate.title")))
 	# License codes are long single-line tokens; a multi-line field makes the
 	# whole code visible and lets users paste it from an email or chat without
 	# horizontal scrolling. Whitespace is stripped before activation.
 	_license_input = TextEdit.new()
-	_license_input.placeholder_text = _t("粘贴授权码 GTL1....（可整段粘贴，自动忽略空格和换行）")
+	_license_input.placeholder_text = _t("activate.placeholder")
 	_license_input.custom_minimum_size = Vector2(0, 64)
 	_license_input.scroll_fit_content_height = true
 	_license_input.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -1025,23 +1025,23 @@ func _build_ui() -> void:
 
 	var license_buttons := HBoxContainer.new()
 	activate_card.add_child(license_buttons)
-	_license_activate_button = _button(_t("激活"), _on_activate_license)
-	_license_activate_button.tooltip_text = _t("激活授权（Ctrl/Cmd+Enter）")
+	_license_activate_button = _button(_t("common.activate"), _on_activate_license)
+	_license_activate_button.tooltip_text = _t("activate.tooltip")
 	_license_activate_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_style_primary(_license_activate_button)
 	license_buttons.add_child(_license_activate_button)
-	var paste_button := _button(_t("粘贴"), func():
+	var paste_button := _button(_t("common.paste"), func():
 		var text := DisplayServer.clipboard_get().strip_edges()
 		if text == "":
-			_append_log("warn", _t("剪贴板为空"))
+			_append_log("warn", _t("toast.clipboard_empty"))
 			return
 		_license_input.text = text
 	)
-	paste_button.tooltip_text = _t("从剪贴板粘贴授权码")
+	paste_button.tooltip_text = _t("activate.paste_tooltip")
 	license_buttons.add_child(paste_button)
 
 	activate_card.add_child(
-		_hint(_t("授权码与机器码绑定；换机请联系我们重新签发。激活后重启 GDLive 服务器生效。"))
+		_hint(_t("activate.hint"))
 	)
 
 	# 支持服务在后台运行，面板只保留两个入口按钮，不展示地址 / 端口。
@@ -1049,21 +1049,21 @@ func _build_ui() -> void:
 	_support_row = support_row
 	support_row.add_theme_constant_override("separation", 6)
 	support.add_child(support_row)
-	_support_open_button = _button(_t("打开授权页"), _on_open_support)
+	_support_open_button = _button(_t("support.open_page"), _on_open_support)
 	_support_open_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_support_open_button.tooltip_text = _t("打开授权 / 购买网页")
+	_support_open_button.tooltip_text = _t("support.open_page_tooltip")
 	_style_primary(_support_open_button)
 	support_row.add_child(_support_open_button)
-	_support_copy_button = _button(_t("复制地址"), _on_copy_support)
+	_support_copy_button = _button(_t("common.copy_address"), _on_copy_support)
 	_support_copy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_support_copy_button.tooltip_text = _t("复制授权 / 购买页地址")
+	_support_copy_button.tooltip_text = _t("support.copy_page_tooltip")
 	support_row.add_child(_support_copy_button)
 
 	# --- 联系我们 -------------------------------------------------------
 	var contact_card := _card(support, _ed_dark1, Color(_ed_accent, 0.30), 3, 11)
 
 	var contact_head := Label.new()
-	contact_head.text = _t("联系我们 · 购买 / 续费 / 发票 / 换机")
+	contact_head.text = _t("contact.title")
 	contact_head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	contact_head.add_theme_font_size_override("font_size", 11)
 	contact_head.add_theme_color_override("font_color", _ed_accent)
@@ -1073,25 +1073,25 @@ func _build_ui() -> void:
 	site_row.add_theme_constant_override("separation", 6)
 	contact_card.add_child(site_row)
 	var site_label := Label.new()
-	site_label.text = _t("官网：") + WEBSITE_URL.trim_prefix("https://").trim_suffix("/")
+	site_label.text = _t("contact.website") + WEBSITE_URL.trim_prefix("https://").trim_suffix("/")
 	site_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	site_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	site_label.add_theme_font_size_override("font_size", 12)
 	site_row.add_child(site_label)
-	var open_site := _button(_t("打开官网"), _open_website)
-	open_site.tooltip_text = _t("在浏览器打开 GDLive 官网（文档 / 下载 / 更新日志）")
+	var open_site := _button(_t("common.open_website"), _open_website)
+	open_site.tooltip_text = _t("contact.website_tooltip")
 	site_row.add_child(open_site)
 
 	var github_row := HBoxContainer.new()
 	github_row.add_theme_constant_override("separation", 6)
 	contact_card.add_child(github_row)
-	var open_repo := _button(_t("GitHub 仓库"), _open_github)
+	var open_repo := _button(_t("contact.github"), _open_github)
 	open_repo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	open_repo.tooltip_text = _t("打开 GitHub 仓库（%s）\n%s") % [GITHUB_REPO, GITHUB_URL]
+	open_repo.tooltip_text = _t("contact.github_tooltip") % [GITHUB_REPO, GITHUB_URL]
 	github_row.add_child(open_repo)
-	var report_issue := _button(_t("问题反馈"), _open_github_issues)
+	var report_issue := _button(_t("common.report_issue"), _open_github_issues)
 	report_issue.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	report_issue.tooltip_text = _t("在 GitHub Issues 反馈 Bug / 功能建议：") + GITHUB_ISSUES_URL
+	report_issue.tooltip_text = _t("contact.issues_tooltip") + GITHUB_ISSUES_URL
 	_style_primary(report_issue)
 	github_row.add_child(report_issue)
 
@@ -1099,16 +1099,16 @@ func _build_ui() -> void:
 	email_row.add_theme_constant_override("separation", 6)
 	contact_card.add_child(email_row)
 	_contact_email_label = Label.new()
-	_contact_email_label.text = _t("邮箱：") + _contact_email
+	_contact_email_label.text = _t("contact.email") + _contact_email
 	_contact_email_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_contact_email_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_contact_email_label.add_theme_font_size_override("font_size", 12)
 	email_row.add_child(_contact_email_label)
-	var copy_email := _button(_t("复制邮箱"), _on_copy_contact_email)
-	copy_email.tooltip_text = _t("复制联系邮箱")
+	var copy_email := _button(_t("contact.copy_email"), _on_copy_contact_email)
+	copy_email.tooltip_text = _t("contact.copy_email_alt")
 	email_row.add_child(copy_email)
-	var mail_button := _button(_t("✉ 写邮件"), _open_email_dialog)
-	mail_button.tooltip_text = _t("自动生成含机器码与版本的邮件")
+	var mail_button := _button(_t("contact.write_email"), _open_email_dialog)
+	mail_button.tooltip_text = _t("contact.email_tooltip")
 	_style_gold(mail_button)
 	email_row.add_child(mail_button)
 
@@ -1116,20 +1116,20 @@ func _build_ui() -> void:
 	wechat_row.add_theme_constant_override("separation", 6)
 	contact_card.add_child(wechat_row)
 	_contact_wechat_label = Label.new()
-	_contact_wechat_label.text = _t("微信：") + _contact_wechat
+	_contact_wechat_label.text = _t("contact.wechat") + _contact_wechat
 	_contact_wechat_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_contact_wechat_label.add_theme_font_size_override("font_size", 12)
 	wechat_row.add_child(_contact_wechat_label)
-	var copy_wechat := _button(_t("复制微信"), _on_copy_contact_wechat)
-	copy_wechat.tooltip_text = _t("复制微信号")
+	var copy_wechat := _button(_t("contact.copy_wechat"), _on_copy_contact_wechat)
+	copy_wechat.tooltip_text = _t("contact.copy_wechat_alt")
 	wechat_row.add_child(copy_wechat)
-	var wechat_qr_toggle := _button(_t("好友二维码"), func():
+	var wechat_qr_toggle := _button(_t("contact.friend_qr"), func():
 		if _friend_qr.texture == null:
-			_append_log("warn", _t("好友二维码尚未加载，请稍后重试"))
+			_append_log("warn", _t("toast.friend_qr_loading"))
 			return
 		_friend_qr_panel.visible = not _friend_qr_panel.visible
 	)
-	wechat_qr_toggle.tooltip_text = _t("展开 / 收起微信好友二维码，扫码即可添加")
+	wechat_qr_toggle.tooltip_text = _t("contact.friend_qr_tooltip")
 	wechat_row.add_child(wechat_qr_toggle)
 
 	_friend_qr_panel = PanelContainer.new()
@@ -1145,17 +1145,17 @@ func _build_ui() -> void:
 
 	contact_card.add_child(
 		_hint(
-			_t("购买 / 续费 / 发票 / 换机请邮件或微信（通常 1 个工作日内回复）；")
-			+ _t("Bug 与功能建议请走 GitHub Issues。付款后附上支付截图即可。")
+			_t("contact.hint_buy")
+			+ _t("contact.hint_issues")
 		)
 	)
 
 	# --- 赞赏支持 -------------------------------------------------------
 	var donate_card := _card(support)
-	donate_card.add_child(_section(_t("赞赏支持")))
+	donate_card.add_child(_section(_t("donate.title")))
 
 	var donate_intro := Label.new()
-	donate_intro.text = _t("如果 GDLive 帮到了你，欢迎赞助一杯咖啡 ☕\n赞赏完全自愿，不影响授权与功能。")
+	donate_intro.text = _t("donate.intro")
 	donate_intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	donate_intro.add_theme_font_size_override("font_size", 11)
 	donate_intro.add_theme_color_override("font_color", Color(0.62, 0.66, 0.72))
@@ -1168,7 +1168,7 @@ func _build_ui() -> void:
 	donate_card.add_child(donate_tabs)
 
 	var donate_wx_page := CenterContainer.new()
-	donate_wx_page.name = _t("微信赞赏")
+	donate_wx_page.name = _t("donate.wechat")
 	donate_tabs.add_child(donate_wx_page)
 	var wechat_qr_card := PanelContainer.new()
 	wechat_qr_card.add_theme_stylebox_override("panel", _qr_card_style())
@@ -1180,7 +1180,7 @@ func _build_ui() -> void:
 	wechat_qr_card.add_child(_donate_qr_wechat)
 
 	var donate_ali_page := CenterContainer.new()
-	donate_ali_page.name = _t("支付宝赞赏")
+	donate_ali_page.name = _t("donate.alipay")
 	donate_tabs.add_child(donate_ali_page)
 	var alipay_qr_card := PanelContainer.new()
 	alipay_qr_card.add_theme_stylebox_override("panel", _qr_card_style())
@@ -1191,7 +1191,7 @@ func _build_ui() -> void:
 	_donate_qr_alipay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	alipay_qr_card.add_child(_donate_qr_alipay)
 
-	var donate_open := _button(_t("在浏览器打开赞赏页"), _on_open_donate)
+	var donate_open := _button(_t("donate.open_page"), _on_open_donate)
 	donate_open.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	donate_card.add_child(donate_open)
 
@@ -1200,7 +1200,7 @@ func _build_ui() -> void:
 	# containers once so the visual order follows the workflow instead:
 	# 调试（every run) → 远程（share the build) → 日志（iterate) →
 	# 证书安装（one-time setup) → 支持（rare).
-	var order: Array[String] = [_t("调试"), _t("远程"), _t("日志"), _t("证书安装"), _t("支持")]
+	var order: Array[String] = [_t("tab.debug"), _t("tab.remote"), _t("tab.logs"), _t("tab.cert"), _t("tab.support")]
 	var by_title: Dictionary = {}
 	for i in range(_tabs.get_tab_count()):
 		by_title[_tabs.get_tab_title(i)] = _tabs.get_tab_control(i)
@@ -1209,48 +1209,48 @@ func _build_ui() -> void:
 		if by_title.has(tab_title):
 			_tabs.move_child(by_title[tab_title], target)
 			target += 1
-	_tab_support = _tabs.get_tab_idx_from_control(by_title[_t("支持")])
-	_tab_cert = _tabs.get_tab_idx_from_control(by_title[_t("证书安装")])
+	_tab_support = _tabs.get_tab_idx_from_control(by_title[_t("tab.support")])
+	_tab_cert = _tabs.get_tab_idx_from_control(by_title[_t("tab.cert")])
 
 	# ===================== dialogs / footer ==============================
 	_confirm_rotate = ConfirmationDialog.new()
-	_confirm_rotate.title = _t("重新生成根证书")
+	_confirm_rotate.title = _t("rotate.title")
 	_confirm_rotate.dialog_text = (
-		_t("重新生成后，根证书会换新：所有设备（包括这台电脑）都需要重新安装/信任。\n\n")
-		+ _t("继续吗？")
+		_t("rotate.text")
+		+ _t("rotate.confirm")
 	)
 	_confirm_rotate.confirmed.connect(_do_rotate_ca)
 	add_child(_confirm_rotate)
 
 	_confirm_remove_license = ConfirmationDialog.new()
-	_confirm_remove_license.title = _t("移除本机授权")
-	_confirm_remove_license.ok_button_text = _t("确认移除")
-	_confirm_remove_license.cancel_button_text = _t("取消")
+	_confirm_remove_license.title = _t("support.remove_license")
+	_confirm_remove_license.ok_button_text = _t("remove.title")
+	_confirm_remove_license.cancel_button_text = _t("common.cancel")
 	_confirm_remove_license.dialog_text = (
-		_t("移除后将立即退出 Pro：HTTPS、远程调试、自动导出等 Pro 功能会关闭，")
-		+ _t("正在进行的远程试玩也会断开。\n\n")
-		+ _t("授权码不会丢失，可用同一个授权码重新激活；如果设备数量已达上限，")
-		+ _t("可能需要先联系我们解绑。\n\n")
-		+ _t("确定要移除本机授权吗？")
+		_t("remove.text1")
+		+ _t("remove.text2")
+		+ _t("remove.text3")
+		+ _t("remove.text4")
+		+ _t("remove.text5")
 	)
 	_confirm_remove_license.confirmed.connect(_do_remove_license)
 	add_child(_confirm_remove_license)
 
 	_ca_prompt = AcceptDialog.new()
-	_ca_prompt.title = _t("GDLive · 建议安装根证书")
-	_ca_prompt.ok_button_text = _t("立即安装")
-	_ca_prompt.add_cancel_button(_t("稍后"))
-	_ca_prompt.add_button(_t("打开安装引导"), true, "guide")
+	_ca_prompt.title = _t("ca_prompt.title")
+	_ca_prompt.ok_button_text = _t("ca_prompt.install")
+	_ca_prompt.add_cancel_button(_t("ca_prompt.later"))
+	_ca_prompt.add_button(_t("ca_prompt.guide"), true, "guide")
 	_ca_prompt.confirmed.connect(_on_ca_prompt_install)
 	_ca_prompt.custom_action.connect(_on_ca_prompt_action)
 	add_child(_ca_prompt)
 
 	_onboard = AcceptDialog.new()
-	_onboard.title = _t("欢迎使用 GDLive")
-	_onboard.ok_button_text = _t("开始使用")
-	_onboard.add_cancel_button(_t("关闭"))
-	_onboard.add_button(_t("🌐 打开官网"), true, "site")
-	_onboard.add_button(_t("安装根证书并启用 HTTPS"), true, "cert")
+	_onboard.title = _t("onboard.title")
+	_onboard.ok_button_text = _t("onboard.start")
+	_onboard.add_cancel_button(_t("onboard.close"))
+	_onboard.add_button(_t("onboard.open_website"), true, "site")
+	_onboard.add_button(_t("onboard.install_ca"), true, "cert")
 	_onboard.confirmed.connect(_mark_onboarded)
 	_onboard.canceled.connect(_mark_onboarded)
 	_onboard.custom_action.connect(_on_onboard_action)
@@ -1260,8 +1260,8 @@ func _build_ui() -> void:
 	# Buy flow in one place: price + machine code + payment QR codes, so the
 	# user can scan and pay without leaving the editor.
 	_buy_dialog = AcceptDialog.new()
-	_buy_dialog.title = _t("购买 / 升级 Pro")
-	_buy_dialog.ok_button_text = _t("完成，去激活")
+	_buy_dialog.title = _t("buy.title")
+	_buy_dialog.ok_button_text = _t("buy.done")
 	_buy_dialog.min_size = Vector2i(360, 0)
 	var buy_box := VBoxContainer.new()
 	buy_box.add_theme_constant_override("separation", 8)
@@ -1274,24 +1274,24 @@ func _build_ui() -> void:
 	_buy_price_label.add_theme_color_override("font_color", BRAND_GOLD)
 	buy_box.add_child(_buy_price_label)
 
-	buy_box.add_child(_section(_t("① 复制机器码（付款时备注）")))
+	buy_box.add_child(_section(_t("buy.step1")))
 	_buy_machine_label = Label.new()
 	_buy_machine_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_buy_machine_label.add_theme_font_size_override("font_size", 12)
 	buy_box.add_child(_buy_machine_label)
 	var buy_copy_row := HBoxContainer.new()
 	buy_box.add_child(buy_copy_row)
-	var buy_copy := _button(_t("复制机器码"), _on_copy_machine)
+	var buy_copy := _button(_t("common.copy_machine"), _on_copy_machine)
 	buy_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_copy_row.add_child(buy_copy)
 
-	buy_box.add_child(_section(_t("② 选择支付方式，扫码付款")))
+	buy_box.add_child(_section(_t("buy.step2")))
 	var buy_tabs := TabContainer.new()
 	buy_tabs.custom_minimum_size = Vector2(0, 272)
 	buy_box.add_child(buy_tabs)
 
 	var buy_wx_page := CenterContainer.new()
-	buy_wx_page.name = _t("微信支付")
+	buy_wx_page.name = _t("buy.wechat_pay")
 	buy_tabs.add_child(buy_wx_page)
 	_buy_qr_wechat = _buy_qr(220)
 	# CenterContainer sizes children to their minimum: without an explicit
@@ -1300,7 +1300,7 @@ func _build_ui() -> void:
 	buy_wx_page.add_child(_buy_qr_wechat)
 
 	var buy_ali_page := CenterContainer.new()
-	buy_ali_page.name = _t("支付宝")
+	buy_ali_page.name = _t("buy.alipay")
 	buy_tabs.add_child(buy_ali_page)
 	_buy_qr_alipay = _buy_qr(220)
 	_buy_qr_alipay.custom_minimum_size = Vector2(220, 220)
@@ -1315,16 +1315,16 @@ func _build_ui() -> void:
 	var buy_contact_row := HBoxContainer.new()
 	buy_contact_row.add_theme_constant_override("separation", 6)
 	buy_box.add_child(buy_contact_row)
-	var buy_mail := _button(_t("✉ 邮件联系我们"), _open_email_dialog)
+	var buy_mail := _button(_t("buy.email_us"), _open_email_dialog)
 	buy_mail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	buy_mail.tooltip_text = _t("自动生成含机器码的邮件")
+	buy_mail.tooltip_text = _t("buy.email_tooltip")
 	_style_gold(buy_mail)
 	buy_contact_row.add_child(buy_mail)
-	var buy_copy_wechat := _button(_t("复制微信"), _on_copy_contact_wechat)
+	var buy_copy_wechat := _button(_t("contact.copy_wechat"), _on_copy_contact_wechat)
 	buy_copy_wechat.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_contact_row.add_child(buy_copy_wechat)
 
-	var buy_browser := _button(_t("在浏览器打开购买页"), _on_open_pro_browser)
+	var buy_browser := _button(_t("buy.open_page"), _on_open_pro_browser)
 	buy_browser.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_box.add_child(buy_browser)
 	add_child(_buy_dialog)
@@ -1333,10 +1333,10 @@ func _build_ui() -> void:
 	# Pre-filled template so users never have to assemble the machine code,
 	# version and payment details by hand.
 	_email_dialog = AcceptDialog.new()
-	_email_dialog.title = _t("邮件联系我们")
-	_email_dialog.ok_button_text = _t("打开邮件应用")
-	_email_dialog.add_cancel_button(_t("关闭"))
-	_email_dialog.add_button(_t("复制邮件内容"), true, "copy")
+	_email_dialog.title = _t("email.title")
+	_email_dialog.ok_button_text = _t("email.open_app")
+	_email_dialog.add_cancel_button(_t("onboard.close"))
+	_email_dialog.add_button(_t("email.copy_content"), true, "copy")
 	_email_dialog.dialog_hide_on_ok = false
 	_email_dialog.min_size = Vector2i(460, 0)
 	_email_dialog.confirmed.connect(_send_email)
@@ -1350,29 +1350,29 @@ func _build_ui() -> void:
 	_email_dialog.add_child(mail_box)
 
 	var mail_intro := Label.new()
-	mail_intro.text = _t("主题与正文已自动填好（含机器码与版本），也可以先修改再发送。付款后请附上支付截图。")
+	mail_intro.text = _t("email.intro")
 	mail_intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	mail_intro.add_theme_font_size_override("font_size", 11)
 	mail_intro.add_theme_color_override("font_color", Color(0.62, 0.66, 0.72))
 	mail_box.add_child(mail_intro)
 
-	mail_box.add_child(_section(_t("收件人")))
+	mail_box.add_child(_section(_t("email.to")))
 	var to_row := HBoxContainer.new()
 	mail_box.add_child(to_row)
 	_email_to_input = LineEdit.new()
 	_email_to_input.editable = false
 	_email_to_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	to_row.add_child(_email_to_input)
-	var copy_to := _button(_t("复制邮箱"), _on_copy_email_recipient)
-	copy_to.tooltip_text = _t("复制收件人邮箱")
+	var copy_to := _button(_t("contact.copy_email"), _on_copy_email_recipient)
+	copy_to.tooltip_text = _t("email.copy_to")
 	to_row.add_child(copy_to)
 
-	mail_box.add_child(_section(_t("主题")))
+	mail_box.add_child(_section(_t("email.subject")))
 	_email_subject_input = LineEdit.new()
 	_email_subject_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mail_box.add_child(_email_subject_input)
 
-	mail_box.add_child(_section(_t("正文（可编辑）")))
+	mail_box.add_child(_section(_t("email.body")))
 	_email_body_edit = TextEdit.new()
 	_email_body_edit.custom_minimum_size = Vector2(0, 190)
 	_email_body_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -1386,7 +1386,7 @@ func _build_ui() -> void:
 	mail_box.add_child(_email_status_label)
 
 	var mail_hint := Label.new()
-	mail_hint.text = _t("未配置邮件客户端时，可用「复制邮件内容」粘贴到网页邮箱。")
+	mail_hint.text = _t("email.hint")
 	mail_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	mail_hint.add_theme_font_size_override("font_size", 10)
 	mail_hint.add_theme_color_override("font_color", _ed_dim)
@@ -1397,29 +1397,29 @@ func _build_ui() -> void:
 	add_child(footer_row)
 
 	var footer := Label.new()
-	footer.text = _t("手机扫码调试")
+	footer.text = _t("qr.game_title")
 	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	footer.tooltip_text = _t("COOP/COEP 已开启：手机连同一 Wi-Fi 扫码即可调试")
+	footer.tooltip_text = _t("qr.game_hint")
 	footer.add_theme_color_override("font_color", _ed_dim)
 	footer.add_theme_font_size_override("font_size", 10)
 	footer_row.add_child(footer)
 
-	var footer_site := _button(_t("🌐 官网"), _open_website)
+	var footer_site := _button(_t("qr.website"), _open_website)
 	footer_site.flat = true
-	footer_site.tooltip_text = _t("打开 GDLive 官网（文档 / 下载 / 更新日志）\n") + WEBSITE_URL
+	footer_site.tooltip_text = _t("qr.website_tooltip") + WEBSITE_URL
 	footer_site.add_theme_font_size_override("font_size", 10)
 	footer_row.add_child(footer_site)
 
-	var footer_issues := _button(_t("问题反馈"), _open_github_issues)
+	var footer_issues := _button(_t("common.report_issue"), _open_github_issues)
 	footer_issues.flat = true
-	footer_issues.tooltip_text = _t("在 GitHub Issues 反馈 Bug / 功能建议\n") + GITHUB_ISSUES_URL
+	footer_issues.tooltip_text = _t("qr.issues_tooltip") + GITHUB_ISSUES_URL
 	footer_issues.add_theme_font_size_override("font_size", 10)
 	footer_row.add_child(footer_issues)
 
-	var footer_contact := _button(_t("✉ 联系我们"), _open_email_dialog)
+	var footer_contact := _button(_t("qr.contact"), _open_email_dialog)
 	footer_contact.flat = true
-	footer_contact.tooltip_text = _t("邮件联系我们：购买 / 续费 / 发票 / 换机")
+	footer_contact.tooltip_text = _t("qr.contact_tooltip")
 	footer_contact.add_theme_font_size_override("font_size", 10)
 	footer_row.add_child(footer_contact)
 
@@ -1450,7 +1450,7 @@ func _update_settings_ui() -> void:
 	if _settings_box == null:
 		return
 	var expanded := _settings_box.visible
-	_settings_toggle.text = ("▾ " if expanded else "▸ ") + _t("服务设置")
+	_settings_toggle.text = ("▾ " if expanded else "▸ ") + _t("settings.title")
 	_settings_summary.visible = not expanded
 	_update_settings_summary()
 
@@ -1461,14 +1461,14 @@ func _update_settings_summary() -> void:
 	var host := "0.0.0.0" if _host.selected == 0 else "127.0.0.1"
 	var flags: Array[String] = []
 	if _auto_export.button_pressed:
-		flags.append(_t("自动导出"))
+		flags.append(_t("settings.auto_export"))
 	if _auto_reload.button_pressed:
-		flags.append(_t("自动刷新"))
+		flags.append(_t("settings.auto_reload"))
 	if _watch.button_pressed:
-		flags.append(_t("监听"))
+		flags.append(_t("settings.watch_short"))
 	if _tls.button_pressed:
 		flags.append("HTTPS")
-	var mode := " / ".join(flags) if not flags.is_empty() else _t("手动")
+	var mode := " / ".join(flags) if not flags.is_empty() else _t("settings.manual")
 	_settings_summary.text = "%s:%d · %s" % [host, int(_port.value), mode]
 
 
@@ -1646,8 +1646,9 @@ func _section(text: String) -> Label:
 ## Translate a UI string. Chinese source text doubles as the lookup key;
 ## unknown keys fall back to the Chinese text so a missing translation
 ## degrades gracefully instead of hiding the label.
-func _t(text: String) -> String:
-	return text if _zh else I18N_EN.get(text, text)
+func _t(key: String) -> String:
+	var entry: Dictionary = I18N.get(key, {})
+	return entry.get("zh" if _zh else "en", key)
 
 
 func _popup_dialog(dialog: Window, minsize := Vector2i(0, 0)) -> void:
@@ -1710,7 +1711,7 @@ func _start_server() -> void:
 	var use_tls := _tls.button_pressed
 	if use_tls and not _license_pro:
 		use_tls = false
-		_append_log("warn", _t("免费版无法使用 HTTPS，已自动改用 HTTP；升级 Pro 后可启用"))
+		_append_log("warn", _t("toast.free_https_off"))
 	# Empty cert dir => machine-wide PKI (one root CA for every project).
 	var result: Dictionary = server.start(
 		host,
@@ -1720,19 +1721,19 @@ func _start_server() -> void:
 		""
 	)
 	if not bool(result.get("ok", false)):
-		_append_log("error", _t("启动失败: %s") % str(result.get("error", _t("未知错误"))))
+		_append_log("error", _t("log.start_failed") % str(result.get("error", _t("common.unknown_error"))))
 		_refresh_status()
 		return
 
-	_append_log("success", _t("服务器已启动，监听 %s:%d") % [host, int(_port.value)])
+	_append_log("success", _t("log.server_started") % [host, int(_port.value)])
 	if _tls.button_pressed:
 		_append_log(
 			"info",
-			_t("HTTPS 由本机根证书签发；手机首次使用请到「证书安装」标签页扫码安装根证书")
+			_t("log.https_signed")
 		)
 	_refresh_status()
 	if not bool(server.has_build()):
-		_append_log("info", _t("还没有 Web 构建，点「立即导出」生成"))
+		_append_log("info", _t("log.no_build"))
 
 
 func _on_toggle() -> void:
@@ -1740,8 +1741,8 @@ func _on_toggle() -> void:
 		return
 	if bool(server.is_running()):
 		server.stop()
-		_append_log("info", _t("服务器已停止"))
-		_toast(_t("服务器已停止"))
+		_append_log("info", _t("status.server_stopped"))
+		_toast(_t("status.server_stopped"))
 		_refresh_status()
 	else:
 		_start_server()
@@ -1753,10 +1754,10 @@ func _on_export() -> void:
 	if _preset == "":
 		_refresh_preset_label()
 	if _preset == "":
-		_append_log("error", _t("没有 Web 导出预设：先点「创建 Web 预设」"))
+		_append_log("error", _t("log.no_preset"))
 		return
 	if not bool(server.export_now()):
-		_append_log("warn", _t("无法开始导出（可能已有任务在运行）"))
+		_append_log("warn", _t("log.export_busy"))
 		return
 	_export_button.disabled = true
 	_refresh_status()
@@ -1766,13 +1767,13 @@ func _on_reload_clients() -> void:
 	if server == null or not bool(server.is_running()):
 		return
 	var count: int = int(server.reload_clients())
-	_append_log("info", _t("已推送刷新到 %d 个页面") % count)
-	_toast(_t("已推送刷新到 %d 个页面") % count)
+	_append_log("info", _t("toast.refresh_pushed") % count)
+	_toast(_t("toast.refresh_pushed") % count)
 
 
 func _on_shot_request() -> void:
 	if server == null or not bool(server.is_running()):
-		_append_log("warn", _t("服务器未运行，无法请求截图"))
+		_append_log("warn", _t("toast.shot_no_server"))
 		return
 	var result := String(server.request_shots())
 	if result.begins_with("ERROR::"):
@@ -1780,22 +1781,22 @@ func _on_shot_request() -> void:
 		return
 	var count := result.to_int()
 	if count <= 0:
-		_append_log("warn", _t("没有已连接的页面，截图请求未送达（先在浏览器/手机打开游戏）"))
-		_toast(_t("没有已连接的页面"), "warn")
+		_append_log("warn", _t("toast.shot_no_pages_hint"))
+		_toast(_t("toast.no_pages"), "warn")
 	else:
-		_append_log("info", _t("已向 %d 个页面请求截图，等待回传…") % count)
-		_toast(_t("已向 %d 个页面请求截图…") % count)
+		_append_log("info", _t("log.shot_requested") % count)
+		_toast(_t("log.shot_requested_alt") % count)
 
 
 func _on_screenshot(uid: String, png_base64: String) -> void:
 	var png := Marshalls.base64_to_raw(png_base64)
 	if png.is_empty():
-		_append_log("error", _t("截图 %s 解码失败") % uid)
+		_append_log("error", _t("log.shot_decode_failed") % uid)
 		return
 	var image := Image.new()
 	var err := image.load_png_from_buffer(png)
 	if err != OK:
-		_append_log("error", _t("截图 %s 不是有效的 PNG（%s）") % [uid, error_string(err)])
+		_append_log("error", _t("log.shot_not_png") % [uid, error_string(err)])
 		return
 	var dir_path := ProjectSettings.globalize_path("res://gdlive-shots")
 	DirAccess.make_dir_recursive_absolute(dir_path)
@@ -1803,10 +1804,10 @@ func _on_screenshot(uid: String, png_base64: String) -> void:
 	var file_path := "%s/gdlive-shot-%s-%s.png" % [dir_path, uid, stamp]
 	err = image.save_png(file_path)
 	if err != OK:
-		_append_log("error", _t("截图保存失败：%s（%s）") % [file_path, error_string(err)])
+		_append_log("error", _t("log.shot_save_failed") % [file_path, error_string(err)])
 		return
-	_append_log("success", _t("已保存截图 → %s（%d×%d）") % [file_path, image.get_width(), image.get_height()])
-	_toast(_t("截图已保存（%d×%d）") % [image.get_width(), image.get_height()], "success")
+	_append_log("success", _t("log.shot_saved") % [file_path, image.get_width(), image.get_height()])
+	_toast(_t("toast.shot_saved") % [image.get_width(), image.get_height()], "success")
 
 
 func _on_cmd_submitted(text: String) -> void:
@@ -1814,15 +1815,15 @@ func _on_cmd_submitted(text: String) -> void:
 	if expr == "":
 		return
 	if server == null or not bool(server.is_running()):
-		_append_log("warn", _t("服务器未运行，指令未发送"))
+		_append_log("warn", _t("toast.cmd_no_server"))
 		return
 	var result := String(server.send_command(expr))
 	if result.begins_with("ERROR::"):
 		_append_log("error", result.trim_prefix("ERROR::"))
-		_toast(_t("指令发送失败"), "error")
+		_toast(_t("toast.cmd_failed"), "error")
 		return
-	_append_log("info", _t("[cmd] 已发送到 %s 个页面：%s") % [result, expr])
-	_toast(_t("指令已发送到 %s 个页面") % result)
+	_append_log("info", _t("log.cmd_sent_detail") % [result, expr])
+	_toast(_t("toast.cmd_sent") % result)
 	_cmd_history.push_front(expr)
 	if _cmd_history.size() > 20:
 		_cmd_history.resize(20)
@@ -1867,9 +1868,9 @@ func _refresh_status() -> void:
 	var exporting := bool(status.get("exporting", false))
 	var tls := bool(status.get("tls", false))
 
-	_start_button.text = _t("停止") if running else _t("启动")
+	_start_button.text = _t("common.stop") if running else _t("common.start")
 	_export_button.disabled = exporting
-	_export_button.text = _t("导出中…") if exporting else _t("导出")
+	_export_button.text = _t("status.exporting") if exporting else _t("common.export")
 	_open_quick_button.disabled = not running
 	_export_progress.visible = exporting
 	if exporting and _export_started_ms == 0:
@@ -1878,9 +1879,9 @@ func _refresh_status() -> void:
 		_export_started_ms = 0
 
 	if not running:
-		_set_state_hint(_t("服务器未启动 · 点顶部「启动」开始监听"))
+		_set_state_hint(_t("status.not_running"))
 	elif not bool(status.get("has_build", false)):
-		_set_state_hint(_t("还没有 Web 构建 · 点顶部「导出」生成"))
+		_set_state_hint(_t("status.no_build"))
 	else:
 		_set_state_hint("")
 
@@ -1889,17 +1890,17 @@ func _refresh_status() -> void:
 		var urls: PackedStringArray = status.get("urls", PackedStringArray())
 		var v6_urls: PackedStringArray = status.get("urls_v6", PackedStringArray())
 		var first := urls[0].replace("http://", "").replace("https://", "") if urls.size() > 0 else "?"
-		var text := _t("● 运行中 · %s · %d 个客户端") % [first, clients]
+		var text := _t("status.running") % [first, clients]
 		if exporting:
 			var secs := int((Time.get_ticks_msec() - _export_started_ms) / 1000)
-			text += _t(" · 导出中 %ds") % maxi(secs, 0)
+			text += _t("status.exporting_secs") % maxi(secs, 0)
 		_status_label.add_theme_color_override("font_color", _ed_positive)
 		_status_label.text = text
 		_status_label.tooltip_text = "%s://%s/__gdlive/" % [scheme, first]
 		_refresh_urls(urls, v6_urls)
 	else:
 		_status_label.add_theme_color_override("font_color", _ed_dim)
-		_status_label.text = _t("○ 已停止")
+		_status_label.text = _t("status.stopped")
 		_status_label.tooltip_text = ""
 		_refresh_urls(PackedStringArray(), PackedStringArray())
 	_refresh_license()
@@ -1970,31 +1971,31 @@ func _on_open() -> void:
 	var url := _selected_url()
 	if url != "":
 		OS.shell_open(url + "/")
-		_toast(_t("已在浏览器打开游戏地址"))
+		_toast(_t("toast.game_opened"))
 
 
 func _on_open_qr_page() -> void:
 	var base := _selected_url()
 	if base == "":
-		_append_log("warn", _t("先启动服务器，再打开二维码页面"))
+		_append_log("warn", _t("toast.start_first_qr"))
 		return
 	OS.shell_open(base + "/__gdlive/qr")
-	_toast(_t("已在浏览器打开二维码页面"))
+	_toast(_t("toast.qr_page_opened"))
 
 
 func _on_open_debug_page() -> void:
 	var url := _selected_url()
 	if url != "":
 		OS.shell_open(url + "/__gdlive/")
-		_toast(_t("已在浏览器打开调试页"))
+		_toast(_t("toast.debug_page_opened"))
 
 
 func _on_copy_url() -> void:
 	var url := _selected_url()
 	if url != "":
 		DisplayServer.clipboard_set(url + "/")
-		_append_log("info", _t("已复制 %s/") % url)
-		_toast(_t("已复制游戏地址"))
+		_append_log("info", _t("toast.url_copied") % url)
+		_toast(_t("toast.game_url_copied"))
 
 
 # ---------------------------------------------------------------------------
@@ -2017,10 +2018,10 @@ func _refresh_preset_label() -> void:
 	if server != null:
 		server.set_preset(_preset)
 	if _preset == "":
-		_preset_label.text = _t("预设：未找到 Web 预设")
+		_preset_label.text = _t("log.preset_missing")
 		_preset_button.visible = true
 	else:
-		_preset_label.text = _t("预设：%s") % _preset
+		_preset_label.text = _t("log.preset") % _preset
 		_preset_button.visible = false
 
 
@@ -2070,10 +2071,10 @@ func _on_create_preset() -> void:
 
 	var err := cfg.save(path)
 	if err != OK:
-		_append_log("error", _t("写入 export_presets.cfg 失败: %s") % error_string(err))
+		_append_log("error", _t("log.preset_write_failed") % error_string(err))
 		return
-	_append_log("success", _t("已创建 Web 预设（线程支持关闭，兼容局域网 HTTP）"))
-	_toast(_t("已创建 Web 预设"), "success")
+	_append_log("success", _t("log.preset_created_http"))
+	_toast(_t("log.preset_created"), "success")
 	_refresh_preset_label()
 	_apply_config()
 
@@ -2093,19 +2094,19 @@ func maybe_show_onboarding() -> void:
 
 
 func _show_onboarding() -> void:
-	print(_t("[GDLive] 显示首次使用引导"))
+	print(_t("log.onboard_shown"))
 	_onboard.dialog_text = (
-		_t("把 Godot 项目一键导出成 Web，在 0.0.0.0 上启动服务；手机连同一个 Wi-Fi，扫码即可调试。\n\n")
-		+ _t("✓ 局域网访问 + 自动导出 / 热刷新\n")
-		+ _t("✓ 浏览器 console / 报错回传 + 页面内调试面板\n")
-		+ _t("✓ 本机根证书 HTTPS（线程版构建需要 SharedArrayBuffer）\n\n")
-		+ _t("建议流程：\n")
-		+ _t("1. 在「调试」页确认端口（当前 %d），点顶部「导出」\n")
-		+ _t("2. 需要线程版时，点下方按钮启用 HTTPS 并安装一次根证书\n")
-		+ _t("3. 手机扫码打开游戏；改代码会自动重新导出并刷新\n\n")
-		+ _t("官网：%s（文档 / 下载 / 更新日志）\n")
-		+ _t("问题反馈：%s（GitHub Issues）\n")
-		+ _t("随时点右上角「?」重新打开本引导。")
+		_t("onboard.text1")
+		+ _t("onboard.bullet1")
+		+ _t("onboard.bullet2")
+		+ _t("onboard.bullet3")
+		+ _t("onboard.steps_title")
+		+ _t("onboard.step1")
+		+ _t("onboard.step2")
+		+ _t("onboard.step3")
+		+ _t("onboard.website")
+		+ _t("onboard.feedback")
+		+ _t("onboard.reopen_hint")
 	) % [int(_port.value), WEBSITE_URL, GITHUB_ISSUES_URL]
 	_popup_dialog(_onboard, Vector2i(620, 320))
 
@@ -2130,7 +2131,7 @@ func _on_onboard_install() -> void:
 		return
 	if not bool(server.license_status().get("pro", false)):
 		_tabs.current_tab = _tab_support
-		_append_log("warn", _t("HTTPS / 根证书需要 Pro 授权，已切换到「支持」页"))
+		_append_log("warn", _t("toast.https_needs_pro"))
 		return
 
 	_tls.button_pressed = true
@@ -2145,12 +2146,12 @@ func _on_onboard_install() -> void:
 	_check_ca_trust()
 
 	if _ca_trust_installed:
-		_append_log("success", _t("HTTPS 已启用，根证书已在本机信任库中"))
+		_append_log("success", _t("log.https_ready"))
 	else:
 		_on_install_ca()
 		_append_log(
 			"info",
-			_t("已生成根证书安装二维码：手机扫码按提示安装；桌面可点「安装到本机」")
+			_t("log.cert_qr_ready")
 		)
 
 
@@ -2163,13 +2164,13 @@ func _set_pro_check(box: CheckBox, base_text: String, pro: bool, tip: String) ->
 		return
 	box.text = base_text if pro else base_text + " · Pro"
 	box.disabled = not pro
-	box.tooltip_text = tip if pro else _t("Pro 功能，激活授权后生效")
+	box.tooltip_text = tip if pro else _t("common.pro_feature")
 
 
 func _apply_support_result(result: Dictionary) -> void:
 	if not bool(result.get("ok", false)):
 		_support_base = ""
-		_append_log("warn", _t("支持服务启动失败: %s") % str(result.get("error", "")))
+		_append_log("warn", _t("log.support_failed") % str(result.get("error", "")))
 		_refresh_support_ui()
 		return
 	var urls: PackedStringArray = result.get("urls", PackedStringArray())
@@ -2180,11 +2181,11 @@ func _apply_support_result(result: Dictionary) -> void:
 			break
 	if _support_base == "" and urls.size() > 0:
 		_support_base = str(urls[0])
-	_append_log("info", _t("支持服务（独立端口）: ") + _support_base + "/__gdlive/")
+	_append_log("info", _t("log.support_running") + _support_base + "/__gdlive/")
 	if _support_base != "" and not _support_base.ends_with(":31065"):
 		_append_log(
 			"warn",
-			_t("支持服务 31065 被占用（可能是旧的 Godot 实例），当前使用 %s；关闭旧实例后重新加载插件即可恢复 31065")
+			_t("log.support_port_busy")
 			% _support_base
 		)
 	_refresh_support_ui()
@@ -2200,18 +2201,18 @@ func _refresh_support_ui() -> void:
 
 func _on_open_support() -> void:
 	if _support_base == "":
-		_append_log("warn", _t("支持服务未启动"))
+		_append_log("warn", _t("status.support_off"))
 		return
 	OS.shell_open(_support_base + "/__gdlive/")
-	_toast(_t("已在浏览器打开支持页"))
+	_toast(_t("toast.support_page_opened"))
 
 
 func _on_copy_support() -> void:
 	if _support_base == "":
 		return
 	DisplayServer.clipboard_set(_support_base + "/__gdlive/")
-	_append_log("info", _t("已复制支持服务地址"))
-	_toast(_t("已复制支持页地址"))
+	_append_log("info", _t("toast.support_addr_copied"))
+	_toast(_t("toast.support_page_copied"))
 
 
 # ---------------------------------------------------------------------------
@@ -2246,24 +2247,24 @@ func _refresh_remote() -> void:
 	_remote_start_button.disabled = busy
 	_remote_stop_button.disabled = not busy
 	_remote_start_button.tooltip_text = (
-		_t("Studio：单次最长 7 天，支持自定义域名")
+		_t("remote.limit_studio")
 		if _license_tier == "studio"
 		else (
-			_t("Pro：单次最长 24 小时")
+			_t("remote.limit_pro")
 			if paid
-			else _t("免费/试用：单次最长 15 分钟，每天 30 分钟")
+			else _t("remote.limit_free")
 		)
 	)
 
 	match phase:
 		"starting":
-			_remote_status_label.text = _t("⏳ 正在建立远程会话…")
+			_remote_status_label.text = _t("remote.establishing")
 			_remote_status_label.add_theme_color_override("font_color", _ed_warning)
 		"running":
-			_remote_status_label.text = _t("● 远程试玩已启动 · 剩余 %s") % _format_remaining(remaining)
+			_remote_status_label.text = _t("remote.running") % _format_remaining(remaining)
 			if quota != "":
 				_remote_status_label.text += "\n" + quota
-			_remote_status_label.tooltip_text = _t("有效期至 %s") % expires
+			_remote_status_label.tooltip_text = _t("support.valid_until") % expires
 			# Color shifts as the tunnel runs out of time.
 			if remaining < 60:
 				_remote_status_label.add_theme_color_override("font_color", Color(0.97, 0.32, 0.29))
@@ -2281,12 +2282,12 @@ func _refresh_remote() -> void:
 			_remote_status_label.text = "✗ %s" % error
 			_remote_status_label.add_theme_color_override("font_color", Color(0.97, 0.32, 0.29))
 		"stopped":
-			_remote_status_label.text = _t("○ 已停止")
+			_remote_status_label.text = _t("status.stopped")
 			_remote_status_label.add_theme_color_override("font_color", _ed_dim)
 		_:
 			# 内置中继不回显地址，避免泄露基础设施信息
 			_remote_status_label.text = (
-				_t("○ 未启动") if paid else _t("○ 未启动 · 免费/试用单次 15 分钟")
+				_t("status.not_started") if paid else _t("remote.not_started_free")
 			)
 			_remote_status_label.add_theme_color_override("font_color", _ed_dim)
 
@@ -2306,7 +2307,7 @@ func _refresh_remote() -> void:
 			# Hand the address over immediately: clipboard + one click opens it.
 			# The URL itself is never displayed (privacy); QR + 复制/打开 suffice.
 			DisplayServer.clipboard_set(url)
-			_append_log("info", _t("远程试玩地址已复制到剪贴板，可直接粘贴分享"))
+			_append_log("info", _t("toast.remote_copied_share_alt"))
 
 	_remote_copy_button.disabled = url == ""
 	_remote_open_button.disabled = url == ""
@@ -2321,21 +2322,21 @@ func _update_remote_limits() -> void:
 	var previous := _remote_ttl.selected
 	_remote_ttl.clear()
 	if paid:
-		_remote_ttl.add_item(_t("5 分钟"), 0)
-		_remote_ttl.add_item(_t("10 分钟"), 1)
-		_remote_ttl.add_item(_t("15 分钟"), 2)
-		_remote_ttl.add_item(_t("30 分钟"), 3)
-		_remote_ttl.add_item(_t("45 分钟"), 4)
-		_remote_ttl.add_item(_t("60 分钟"), 5)
-		_remote_ttl.add_item(_t("6 小时"), 6)
-		_remote_ttl.add_item(_t("12 小时"), 7)
-		_remote_ttl.add_item(_t("24 小时"), 8)
+		_remote_ttl.add_item(_t("remote.ttl_5m"), 0)
+		_remote_ttl.add_item(_t("remote.ttl_10m"), 1)
+		_remote_ttl.add_item(_t("remote.ttl_15m"), 2)
+		_remote_ttl.add_item(_t("remote.ttl_30m"), 3)
+		_remote_ttl.add_item(_t("remote.ttl_45m"), 4)
+		_remote_ttl.add_item(_t("remote.ttl_60m"), 5)
+		_remote_ttl.add_item(_t("remote.ttl_6h"), 6)
+		_remote_ttl.add_item(_t("remote.ttl_12h"), 7)
+		_remote_ttl.add_item(_t("remote.ttl_24h"), 8)
 		if studio:
-			_remote_ttl.add_item(_t("7 天"), 9)
+			_remote_ttl.add_item(_t("remote.ttl_7d"), 9)
 		_remote_ttl.disabled = false
 		_remote_ttl.selected = clampi(previous, 0, _remote_ttl.item_count - 1)
 	else:
-		_remote_ttl.add_item(_t("15 分钟"), 2)
+		_remote_ttl.add_item(_t("remote.ttl_15m"), 2)
 		_remote_ttl.disabled = true
 		_remote_ttl.selected = 2
 	_remote_custom_input.visible = studio
@@ -2382,11 +2383,11 @@ func _on_remote_start() -> void:
 		custom_domain
 	)
 	if bool(result.get("ok", false)):
-		_append_log("info", _t("正在申请远程试玩会话…"))
-		_toast(_t("正在申请远程试玩会话…"))
+		_append_log("info", _t("log.remote_requesting"))
+		_toast(_t("log.remote_requesting"))
 	else:
-		_append_log("error", _t("启动远程试玩失败：%s") % str(result.get("error", "")))
-		_toast(_t("启动远程试玩失败：") + str(result.get("error", "")), "error")
+		_append_log("error", _t("log.remote_start_failed") % str(result.get("error", "")))
+		_toast(_t("toast.remote_start_failed") + str(result.get("error", "")), "error")
 	_refresh_remote()
 
 
@@ -2394,7 +2395,7 @@ func _on_remote_stop() -> void:
 	if server == null:
 		return
 	server.stop_remote()
-	_toast(_t("正在停止远程试玩…"))
+	_toast(_t("toast.remote_stopping"))
 	_refresh_remote()
 
 
@@ -2402,43 +2403,43 @@ func _on_remote_copy() -> void:
 	if _remote_last_url == "":
 		return
 	DisplayServer.clipboard_set(_remote_last_url)
-	_append_log("info", _t("已复制远程试玩地址，可直接粘贴分享"))
-	_toast(_t("已复制远程试玩地址"))
+	_append_log("info", _t("toast.remote_copied_share"))
+	_toast(_t("toast.remote_copied"))
 	# Flash the button so the user gets visual feedback even without the log.
 	_remote_copy_token += 1
 	var token := _remote_copy_token
-	_remote_copy_button.text = _t("已复制 ✓")
+	_remote_copy_button.text = _t("toast.copied")
 	await get_tree().create_timer(1.5).timeout
 	if token == _remote_copy_token and is_instance_valid(_remote_copy_button):
-		_remote_copy_button.text = _t("复制地址")
+		_remote_copy_button.text = _t("common.copy_address")
 
 
 func _on_remote_open() -> void:
 	if _remote_last_url != "":
 		OS.shell_open(_remote_last_url)
-		_toast(_t("已在浏览器打开远程试玩地址"))
+		_toast(_t("toast.remote_opened"))
 
 
 func _format_remaining(seconds: int) -> String:
 	if seconds <= 0:
-		return _t("即将到期")
+		return _t("remote.expiring_soon")
 	var hours := seconds / 3600
 	var mins := (seconds % 3600) / 60
 	var secs := seconds % 60
 	if hours > 0:
-		return _t("%d 小时 %d 分") % [hours, mins]
+		return _t("remote.remaining_hours") % [hours, mins]
 	return "%02d:%02d" % [mins, secs]
 
 
 func _fire_remote_reminder(threshold: int) -> void:
-	var text := _t("⏰ 远程试玩即将结束")
+	var text := _t("toast.remote_ending")
 	match threshold:
 		600:
-			text = _t("⏰ 远程试玩还剩 10 分钟")
+			text = _t("toast.remote_10m")
 		300:
-			text = _t("⏰ 远程试玩还剩 5 分钟")
+			text = _t("toast.remote_5m")
 		60:
-			text = _t("⏰ 远程试玩还剩 1 分钟")
+			text = _t("toast.remote_1m")
 	_append_log("warn", text)
 	# Also pops a toast on every open browser page, including phones on
 	# the tunnel — the game server relays it through the same channel as
@@ -2469,9 +2470,9 @@ func _refresh_license() -> void:
 
 	match tier:
 		"pro", "studio":
-			var validity := _t("永久有效") if expires == "永久" else _t("有效期至 %s") % expires
+			var validity := _t("support.permanent") if expires == "永久" else _t("support.valid_until") % expires
 			var label := "Studio" if tier == "studio" else "Pro"
-			_license_status_label.text = _t("✓ %s 已授权 · %s%s") % [
+			_license_status_label.text = _t("support.status_licensed") % [
 				label,
 				validity,
 				"（%s）" % name if name != "" else "",
@@ -2482,27 +2483,27 @@ func _refresh_license() -> void:
 			_license_badge.add_theme_color_override("font_color", color)
 			_style_badge(_license_badge, color)
 		"trial":
-			_license_status_label.text = _t("⏳ 试用中 · 剩余 %d 天（至 %s）") % [days, expires]
+			_license_status_label.text = _t("support.status_trial") % [days, expires]
 			_license_status_label.add_theme_color_override("font_color", BRAND_GOLD)
 			_license_badge.text = "TRIAL"
 			_license_badge.add_theme_color_override("font_color", BRAND_GOLD)
 			_style_badge(_license_badge, BRAND_GOLD)
 		_:
-			_license_status_label.text = _t("免费版 · 试用已结束")
+			_license_status_label.text = _t("support.status_free")
 			_license_status_label.add_theme_color_override("font_color", Color(0.65, 0.67, 0.7))
 			_license_badge.text = "FREE"
 			_license_badge.add_theme_color_override("font_color", BRAND_GREEN)
 			_style_badge(_license_badge, BRAND_GREEN)
 
 	_license_quota_label.text = (
-		_t("导出次数不限 · 可同时运行多个项目")
+		_t("support.quota_pro")
 		if pro
-		else _t("今日导出 %d/%d · 同时只能运行 1 个项目") % [used, limit]
+		else _t("support.quota_free") % [used, limit]
 	)
 	var bound := str(st.get("bound_id", ""))
-	_license_machine_label.text = _t("机器码：") + str(st.get("machine_id", ""))
+	_license_machine_label.text = _t("support.machine_code") + str(st.get("machine_id", ""))
 	if bound != "":
-		_license_machine_label.text += _t("\n当前授权绑定其他机器码：") + bound
+		_license_machine_label.text += _t("support.bound_other_alt") + bound
 	_contact_email = str(st.get("email", "")).strip_edges()
 	if _contact_email == "":
 		_contact_email = FALLBACK_EMAIL
@@ -2510,11 +2511,11 @@ func _refresh_license() -> void:
 	if _contact_wechat == "":
 		_contact_wechat = FALLBACK_WECHAT
 	if _contact_email_label != null:
-		_contact_email_label.text = _t("邮箱：") + _contact_email
+		_contact_email_label.text = _t("contact.email") + _contact_email
 	if _contact_wechat_label != null:
-		_contact_wechat_label.text = _t("微信：") + _contact_wechat
-	_license_machine_label.tooltip_text = _t("机器码由本机硬件标识本地生成，仅用于授权绑定，不会上传；购买后发给我们换取授权码")
-	_buy_button.text = _t("续费 / 更换授权") if pro else _t("购买 / 升级 Pro")
+		_contact_wechat_label.text = _t("contact.wechat") + _contact_wechat
+	_license_machine_label.tooltip_text = _t("support.machine_tooltip")
+	_buy_button.text = _t("support.renew") if pro else _t("buy.title")
 	_remove_license_button.disabled = not pro
 	# 私用（永久）授权：没有续费 / 移除授权 / 购买入口，整行隐藏。
 	var permanent := pro and expires == "永久"
@@ -2526,7 +2527,7 @@ func _refresh_license() -> void:
 		_buy_price_label.text = str(st.get("price", ""))
 		_buy_machine_label.text = str(st.get("machine_id", ""))
 		_buy_step3_label.text = (
-			_t("③ 付款后把「机器码 + 支付截图」发给我们（微信 %s，或点下方「✉ 邮件联系我们」），\n收到授权码后在「支持」页下方粘贴激活。")
+			_t("buy.step3")
 			% _contact_wechat
 		)
 
@@ -2534,10 +2535,10 @@ func _refresh_license() -> void:
 		# Avoid a trap: a disabled HTTPS checkbox would prevent starting at all.
 		_tls.button_pressed = false
 
-	_set_pro_check(_auto_export, _t("自动导出"), pro, _t("监听项目文件，变更后自动导出"))
-	_set_pro_check(_auto_reload, _t("自动刷新"), pro, _t("导出后通知页面刷新"))
-	_set_pro_check(_tls, _t("HTTPS（线程版）"), pro, _t("本机根证书 + TLS"))
-	_set_pro_check(_debug_overlay, _t("远程调试面板"), pro, _t("页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令），可随时关闭"))
+	_set_pro_check(_auto_export, _t("settings.auto_export"), pro, _t("settings.auto_export_tip_short"))
+	_set_pro_check(_auto_reload, _t("settings.auto_reload"), pro, _t("settings.auto_reload_tip_short"))
+	_set_pro_check(_tls, _t("settings.https"), pro, _t("settings.https_tip_short"))
+	_set_pro_check(_debug_overlay, _t("settings.debug_overlay"), pro, _t("settings.debug_overlay_tip_short"))
 	if _ca_pro_hint != null:
 		_ca_pro_hint.visible = not pro
 	if _log_pro_hint != null:
@@ -2548,10 +2549,10 @@ func _refresh_license() -> void:
 		exporting = bool(server.is_exporting())
 	_export_button.disabled = exporting or (not pro and left <= 0)
 	if not pro and left <= 0:
-		_export_button.tooltip_text = _t("免费版今日导出次数已用完，升级 Pro 可无限导出")
+		_export_button.tooltip_text = _t("tooltip.export_limit_hit")
 	else:
 		_export_button.tooltip_text = (
-			_t("Pro：导出次数不限") if pro else _t("免费版今日剩余 %d 次导出") % left
+			_t("tooltip.exports_unlimited") if pro else _t("tooltip.exports_left") % left
 		)
 
 	_update_remote_limits()
@@ -2565,8 +2566,8 @@ func _on_copy_machine() -> void:
 		return
 	var st: Dictionary = server.license_status()
 	DisplayServer.clipboard_set(str(st.get("machine_id", "")))
-	_append_log("info", _t("已复制机器码，购买后发给我们即可换取授权码"))
-	_toast(_t("已复制机器码"))
+	_append_log("info", _t("toast.machine_copied_buy"))
+	_toast(_t("toast.machine_copied"))
 
 
 func _contact_info() -> Dictionary:
@@ -2592,35 +2593,35 @@ func _contact_info() -> Dictionary:
 func _license_summary(info: Dictionary) -> String:
 	match str(info.get("tier", "free")):
 		"pro":
-			return _t("Pro 已授权")
+			return _t("support.pro_licensed")
 		"studio":
-			return _t("Studio 已授权")
+			return _t("support.studio_licensed")
 		"trial":
-			return _t("试用中（剩余 %d 天）") % int(info.get("days_left", 0))
+			return _t("support.trial_days") % int(info.get("days_left", 0))
 		_:
-			return _t("免费版")
+			return _t("support.free")
 
 
 func _mail_template() -> Dictionary:
 	var info := _contact_info()
 	var machine := str(info.get("machine", ""))
 	var short := machine.substr(0, 12) if machine.length() > 12 else machine
-	var subject := _t("[GDLive] 授权咨询")
+	var subject := _t("email.subject_line")
 	if short != "":
 		subject += " - " + short
 	var version := str(info.get("version", ""))
 	if version == "":
-		version = _t("未知")
+		version = _t("common.unknown")
 	var body := (
-		_t("你好，\n\n")
-		+ _t("我想咨询 GDLive Pro 授权（购买 / 续费 / 发票 / 换机 / Studio 团队版）。\n\n")
-		+ _t("- 机器码：%s\n") % machine
-		+ _t("- 当前版本：GDLive %s\n") % version
-		+ _t("- 当前授权：%s\n") % _license_summary(info)
-		+ _t("- 支付方式：微信 / 支付宝\n")
-		+ _t("- 支付凭证：见附件截图\n\n")
-		+ _t("补充说明：\n\n\n")
-		+ _t("（付款后请附上支付截图；收到授权码后，在插件「支持」页粘贴激活。）\n")
+		_t("email.body_hello")
+		+ _t("email.body_intro")
+		+ _t("email.body_machine") % machine
+		+ _t("email.body_version") % version
+		+ _t("email.body_license") % _license_summary(info)
+		+ _t("email.body_payment")
+		+ _t("email.body_proof")
+		+ _t("email.body_notes")
+		+ _t("email.body_footer")
 	)
 	return {
 		"to": info.get("email", ""),
@@ -2651,7 +2652,7 @@ func _send_email() -> void:
 		return
 	var to := _email_to_input.text.strip_edges()
 	if to == "":
-		_set_email_status(_t("收件人邮箱为空，无法打开邮件应用"), false)
+		_set_email_status(_t("toast.email_no_recipient"), false)
 		return
 	var url := "mailto:%s?subject=%s&body=%s" % [
 		to,
@@ -2660,20 +2661,20 @@ func _send_email() -> void:
 	]
 	var err := OS.shell_open(url)
 	if err == OK:
-		_append_log("info", _t("已打开邮件应用：%s") % to)
+		_append_log("info", _t("toast.email_app_opened") % to)
 		if _email_dialog != null:
 			_email_dialog.hide()
 	else:
 		DisplayServer.clipboard_set(_email_compose_text())
-		_set_email_status(_t("未找到邮件应用；内容已复制，可粘贴到网页邮箱"), false)
-		_append_log("warn", _t("未找到邮件应用，邮件内容已复制到剪贴板"))
+		_set_email_status(_t("toast.email_app_missing"), false)
+		_append_log("warn", _t("toast.email_app_missing_alt"))
 
 
 func _email_compose_text() -> String:
 	var to := _email_to_input.text if _email_to_input != null else ""
 	var subject := _email_subject_input.text if _email_subject_input != null else ""
 	var body := _email_body_edit.text if _email_body_edit != null else ""
-	return _t("收件人：%s\n主题：%s\n\n%s") % [to, subject, body]
+	return _t("email.compose_text") % [to, subject, body]
 
 
 func _set_email_status(message: String, ok: bool) -> void:
@@ -2699,41 +2700,41 @@ func _on_email_dialog_visibility_changed() -> void:
 func _on_email_dialog_action(action: StringName) -> void:
 	if action == &"copy":
 		DisplayServer.clipboard_set(_email_compose_text())
-		_set_email_status(_t("邮件内容已复制，可粘贴到任意邮箱"), true)
-		_append_log("info", _t("已复制邮件内容"))
+		_set_email_status(_t("toast.email_copied_paste"), true)
+		_append_log("info", _t("toast.email_copied"))
 
 
 func _on_copy_email_recipient() -> void:
 	DisplayServer.clipboard_set(_email_to_input.text if _email_to_input != null else _contact_email)
-	_append_log("info", _t("已复制联系邮箱：%s") % _contact_email)
-	_toast(_t("已复制联系邮箱"))
+	_append_log("info", _t("toast.contact_email_copied_detail") % _contact_email)
+	_toast(_t("toast.contact_email_copied"))
 
 
 func _on_copy_contact_email() -> void:
 	DisplayServer.clipboard_set(_contact_email)
-	_append_log("info", _t("已复制联系邮箱：%s") % _contact_email)
-	_toast(_t("已复制联系邮箱"))
+	_append_log("info", _t("toast.contact_email_copied_detail") % _contact_email)
+	_toast(_t("toast.contact_email_copied"))
 
 
 func _on_copy_contact_wechat() -> void:
 	DisplayServer.clipboard_set(_contact_wechat)
-	_append_log("info", _t("已复制微信号：%s") % _contact_wechat)
-	_toast(_t("已复制微信号"))
+	_append_log("info", _t("toast.wechat_copied_detail") % _contact_wechat)
+	_toast(_t("toast.wechat_copied"))
 
 
 func _open_website() -> void:
 	OS.shell_open(WEBSITE_URL)
-	_append_log("info", _t("已在浏览器打开官网：") + WEBSITE_URL)
+	_append_log("info", _t("toast.website_opened") + WEBSITE_URL)
 
 
 func _open_github() -> void:
 	OS.shell_open(GITHUB_URL)
-	_append_log("info", _t("已在浏览器打开 GitHub 仓库：") + GITHUB_URL)
+	_append_log("info", _t("toast.github_opened") + GITHUB_URL)
 
 
 func _open_github_issues() -> void:
 	OS.shell_open(GITHUB_ISSUES_URL)
-	_append_log("info", _t("已在浏览器打开问题反馈：") + GITHUB_ISSUES_URL)
+	_append_log("info", _t("toast.issues_opened") + GITHUB_ISSUES_URL)
 
 
 func _on_open_pro_page() -> void:
@@ -2754,7 +2755,7 @@ func _on_open_pro_browser() -> void:
 	if base == "":
 		base = _selected_url()
 	if base == "":
-		_append_log("warn", _t("支持服务未启动，请重启插件或在「支持」页直接粘贴授权码"))
+		_append_log("warn", _t("toast.support_not_running"))
 		return
 	OS.shell_open(base + "/pro")
 
@@ -2773,18 +2774,18 @@ func _on_activate_license() -> void:
 	var key := _license_input.text
 	key = key.replace("\r", "").replace("\n", "").replace("\t", "").replace(" ", "").strip_edges()
 	if key == "":
-		_append_log("warn", _t("请先粘贴授权码"))
+		_append_log("warn", _t("toast.paste_code_first"))
 		return
 	var result: Dictionary = server.activate_license(key)
 	if bool(result.get("ok", false)):
-		_append_log("success", _t("Pro 授权激活成功"))
-		_toast(_t("Pro 授权激活成功"), "success")
+		_append_log("success", _t("toast.activated"))
+		_toast(_t("toast.activated"), "success")
 		_license_input.text = ""
 		_refresh_license()
-		_append_log("info", _t("重启 GDLive 服务器后 HTTPS / 页面调试面板生效"))
+		_append_log("info", _t("toast.restart_for_pro"))
 	else:
-		_append_log("error", _t("激活失败: %s") % str(result.get("error", "")))
-		_toast(_t("激活失败：") + str(result.get("error", "")), "error")
+		_append_log("error", _t("log.activate_failed") % str(result.get("error", "")))
+		_toast(_t("toast.activate_failed") + str(result.get("error", "")), "error")
 
 
 func _on_remove_license() -> void:
@@ -2801,8 +2802,8 @@ func _do_remove_license() -> void:
 	var result: Dictionary = server.deactivate_license()
 	if bool(result.get("ok", false)):
 		server.stop_remote()
-		_append_log("warn", _t("已移除本机授权，回到免费版"))
-		_toast(_t("已移除本机授权"), "warn")
+		_append_log("warn", _t("toast.license_removed"))
+		_toast(_t("toast.license_removed_short"), "warn")
 		_refresh_license()
 	else:
 		_append_log("error", str(result.get("error", "")))
@@ -2828,10 +2829,10 @@ func _ensure_ca_for_qr() -> void:
 	_ca_auto_attempted = true
 	var result: Dictionary = server.ensure_ca()
 	if bool(result.get("ok", false)):
-		_append_log("info", _t("已自动生成根证书，手机安装二维码已更新"))
+		_append_log("info", _t("toast.cert_generated"))
 		_refresh_ca_info()
 	else:
-		_append_log("warn", _t("自动生成根证书失败: %s") % str(result.get("error", "")))
+		_append_log("warn", _t("log.cert_auto_failed") % str(result.get("error", "")))
 
 
 func _refresh_ca_info() -> void:
@@ -2843,9 +2844,9 @@ func _refresh_ca_info() -> void:
 	_install_urls = ca.get("install_urls", PackedStringArray())
 
 	if not exists:
-		_ca_status_label.text = _t("○ 尚未生成")
+		_ca_status_label.text = _t("cert.not_generated")
 		_ca_status_label.add_theme_color_override("font_color", _ed_warning)
-		_ca_label.text = _t("启用 HTTPS 时自动生成；安装一次后，所有项目、所有 IP 共用。")
+		_ca_label.text = _t("cert.auto_hint")
 		_ca_label.tooltip_text = ""
 		_ca_install_button.disabled = true
 		_ca_rotate_button.disabled = true
@@ -2858,13 +2859,13 @@ func _refresh_ca_info() -> void:
 
 	var fp := str(ca.get("fingerprint", ""))
 	if _ca_trust_installed:
-		_ca_status_label.text = _t("✓ 已安装到本机信任库")
+		_ca_status_label.text = _t("cert.trusted")
 		_ca_status_label.add_theme_color_override("font_color", Color(0.25, 0.73, 0.31))
 	else:
-		_ca_status_label.text = _t("⚠ 未安装到本机信任库")
+		_ca_status_label.text = _t("cert.not_trusted")
 		_ca_status_label.add_theme_color_override("font_color", _ed_warning)
 
-	_ca_label.text = _t("%s\n有效期至 %s · %s…") % [
+	_ca_label.text = _t("cert.detail") % [
 		str(ca.get("cn", "GDLive Local Dev CA")),
 		str(ca.get("not_after", "?")),
 		fp.left(23),
@@ -2872,7 +2873,7 @@ func _refresh_ca_info() -> void:
 	_ca_label.tooltip_text = (
 		"SHA-256\n" + fp
 		+ "\n\n" + _ca_trust_detail
-		+ _t("\n\n目录：\n") + str(ca.get("dir", ""))
+		+ _t("cert.dir_label") + str(ca.get("dir", ""))
 	)
 
 	_ca_install_button.disabled = not _license_pro
@@ -2906,9 +2907,9 @@ func _update_ca_page() -> void:
 	var ready := url != "" and _ca_exists
 	if _ca_page_label != null:
 		if url == "":
-			_ca_page_label.text = _t("启动服务器后显示安装页地址和二维码")
+			_ca_page_label.text = _t("cert.start_first_hint")
 		elif not _ca_exists:
-			_ca_page_label.text = _t("根证书尚未生成 · 点「生成根证书」后显示二维码")
+			_ca_page_label.text = _t("cert.qr_pending_hint")
 		else:
 			_ca_page_label.text = url
 	if _ca_qr != null:
@@ -2949,10 +2950,10 @@ func _on_check_trust() -> void:
 	_check_ca_trust()
 	_append_log(
 		"success" if _ca_trust_installed else "warn",
-		_t("根证书信任检测：%s") % _ca_trust_detail
+		_t("cert.trust_check") % _ca_trust_detail
 	)
 	_toast(
-		_t("根证书信任检测：%s") % _ca_trust_detail,
+		_t("cert.trust_check") % _ca_trust_detail,
 		"success" if _ca_trust_installed else "warn"
 	)
 
@@ -2969,14 +2970,14 @@ func check_ca_on_startup() -> void:
 	_check_ca_trust()
 
 	if not bool(ca.get("exists", false)):
-		_append_log("info", _t("根证书尚未生成：启用 HTTPS 或点「生成根证书」"))
+		_append_log("info", _t("cert.not_generated_hint"))
 		return
 
 	if _ca_trust_installed:
-		_append_log("success", _t("根证书已安装到本机信任库"))
+		_append_log("success", _t("log.cert_trusted"))
 		return
 
-	_append_log("warn", _t("根证书未安装到本机信任库：%s") % _ca_trust_detail)
+	_append_log("warn", _t("log.cert_not_trusted") % _ca_trust_detail)
 
 	# First run: the onboarding dialog explains/offers certificate setup.
 	if not _onboarded:
@@ -2990,10 +2991,10 @@ func _show_ca_prompt() -> void:
 	var ca: Dictionary = server.ca_info()
 	var fp := str(ca.get("fingerprint", ""))
 	_ca_prompt.dialog_text = (
-		_t("GDLive 用本机根证书给 HTTPS 调试地址签名。\n\n")
-		+ _t("证书：%s\n指纹：%s…\n状态：%s\n\n")
-		+ _t("安装一次即可：所有项目、所有 IP 共用，以后换 IP 也不需要重装。\n")
-		+ _t("手机端请点「打开安装引导」，按页面提示安装。")
+		_t("ca_prompt.text1")
+		+ _t("ca_prompt.text2")
+		+ _t("ca_prompt.text3")
+		+ _t("ca_prompt.text4")
 	) % [
 		str(ca.get("cn", "GDLive Local Dev CA")),
 		fp.left(23),
@@ -3018,14 +3019,14 @@ func _on_generate_ca() -> void:
 		return
 	var result: Dictionary = server.ensure_ca()
 	if bool(result.get("ok", false)):
-		_append_log("success", _t("根证书已生成：%s") % str(result.get("fingerprint", "")))
-		_append_log("info", _t("下一步：点「安装根证书」加入本机信任库"))
-		_toast(_t("根证书已生成，下一步：安装到本机"), "success")
+		_append_log("success", _t("log.cert_generated") % str(result.get("fingerprint", "")))
+		_append_log("info", _t("log.cert_next_step"))
+		_toast(_t("log.cert_next_step_alt"), "success")
 	else:
-		_append_log("error", _t("生成根证书失败: %s") % str(result.get("error", "")))
-		_toast(_t("生成根证书失败"), "error")
+		_append_log("error", _t("log.cert_failed") % str(result.get("error", "")))
+		_toast(_t("toast.cert_failed"), "error")
 	_ca_trust_installed = false
-	_ca_trust_detail = _t("尚未安装")
+	_ca_trust_detail = _t("cert.not_installed")
 	_refresh_ca_info()
 
 
@@ -3033,38 +3034,38 @@ func _on_install_ca() -> void:
 	if server == null:
 		return
 	if not server.install_ca():
-		_append_log("warn", _t("无法自动安装，请使用「手机安装引导」手动安装"))
-		_toast(_t("无法自动安装，请手动安装"), "warn")
+		_append_log("warn", _t("toast.cert_manual_phone"))
+		_toast(_t("toast.cert_manual"), "warn")
 		return
-	_append_log("info", _t("正在安装根证书到系统信任库…"))
-	_toast(_t("正在安装根证书…"))
+	_append_log("info", _t("log.cert_installing"))
+	_toast(_t("log.cert_installing_alt"))
 
 
 func _on_ca_installed(ok: bool, message: String) -> void:
 	if ok:
-		_append_log("success", _t("根证书安装完成：") + message)
-		_toast(_t("根证书安装完成"), "success")
+		_append_log("success", _t("log.cert_installed_detail") + message)
+		_toast(_t("toast.cert_installed"), "success")
 	else:
-		_append_log("error", _t("自动安装未完成：") + message)
-		_toast(_t("自动安装未完成：") + message, "error")
+		_append_log("error", _t("toast.cert_auto_incomplete") + message)
+		_toast(_t("toast.cert_auto_incomplete") + message, "error")
 	_check_ca_trust()
 
 
 func _on_open_ca_guide() -> void:
 	if _ca_page_url == "":
-		_append_log("warn", _t("先启动服务器，再打开安装页"))
-		_toast(_t("先启动服务器"), "warn")
+		_append_log("warn", _t("toast.start_first_install"))
+		_toast(_t("toast.start_first"), "warn")
 		return
 	OS.shell_open(_ca_page_url)
-	_toast(_t("已在浏览器打开安装页"))
+	_toast(_t("toast.install_page_opened"))
 
 
 func _on_copy_ca_page() -> void:
 	if _ca_page_url == "":
 		return
 	DisplayServer.clipboard_set(_ca_page_url)
-	_append_log("info", _t("已复制安装页地址: ") + _ca_page_url)
-	_toast(_t("已复制安装页地址"))
+	_append_log("info", _t("toast.install_addr_copied_detail") + _ca_page_url)
+	_toast(_t("toast.install_addr_copied"))
 
 
 func _load_donate_images() -> void:
@@ -3103,7 +3104,7 @@ func _set_donate_texture(rect: TextureRect, kind: String) -> void:
 	var bytes := Marshalls.base64_to_raw(encoded)
 	var image := Image.new()
 	if image.load_jpg_from_buffer(bytes) != OK:
-		_append_log("warn", _t("赞赏二维码解码失败: ") + kind)
+		_append_log("warn", _t("log.donate_qr_failed") + kind)
 		return
 	# Crop the branded poster down to its white QR card so the code can be
 	# rendered large enough to scan inside the narrow dock.
@@ -3128,17 +3129,17 @@ func _on_open_donate() -> void:
 	if base == "":
 		base = _selected_url()
 	if base == "":
-		_append_log("warn", _t("支持服务未启动，可直接在「支持」页扫码赞赏"))
+		_append_log("warn", _t("toast.donate_offline"))
 		return
 	OS.shell_open(base + "/__gdlive/donate")
-	_toast(_t("已在浏览器打开赞赏页"))
+	_toast(_t("toast.donate_opened"))
 
 
 func _on_open_export_dir() -> void:
 	DirAccess.make_dir_recursive_absolute(_out_dir)
 	OS.shell_show_in_file_manager(_out_dir, true)
-	_append_log("info", _t("已在文件管理器打开导出目录"))
-	_toast(_t("已在文件管理器打开导出目录"))
+	_append_log("info", _t("toast.export_dir_opened"))
+	_toast(_t("toast.export_dir_opened"))
 
 
 func _on_open_ca_dir() -> void:
@@ -3148,8 +3149,8 @@ func _on_open_ca_dir() -> void:
 		dir = str(server.pki_dir())
 	DirAccess.make_dir_recursive_absolute(dir)
 	OS.shell_show_in_file_manager(dir, true)
-	_append_log("info", _t("已在文件管理器打开证书目录"))
-	_toast(_t("已在文件管理器打开证书目录"))
+	_append_log("info", _t("toast.cert_dir_opened"))
+	_toast(_t("toast.cert_dir_opened"))
 
 
 func _on_rotate_ca() -> void:
@@ -3163,13 +3164,13 @@ func _do_rotate_ca() -> void:
 		return
 	var result: Dictionary = server.rotate_ca()
 	if bool(result.get("ok", false)):
-		_append_log("warn", _t("已生成新的根证书：%s（所有设备需要重新信任）") % str(result.get("cn", "")))
-		_toast(_t("已生成新的根证书，设备需重新信任"), "warn")
+		_append_log("warn", _t("log.cert_rotated") % str(result.get("cn", "")))
+		_toast(_t("toast.cert_rotated"), "warn")
 	else:
-		_append_log("error", _t("重新生成失败: %s") % str(result.get("error", "")))
-		_toast(_t("重新生成失败：") + str(result.get("error", "")), "error")
+		_append_log("error", _t("log.rotate_failed") % str(result.get("error", "")))
+		_toast(_t("toast.rotate_failed") + str(result.get("error", "")), "error")
 	_ca_trust_installed = false
-	_ca_trust_detail = _t("新证书尚未安装")
+	_ca_trust_detail = _t("cert.new_not_installed")
 	_refresh_ca_info()
 	_refresh_status()
 
@@ -3193,7 +3194,7 @@ func _on_clients_changed(_count: int) -> void:
 
 func _on_files_changed(count: int, sample: PackedStringArray) -> void:
 	var preview := ", ".join(sample)
-	_append_log("debug", _t("文件变更 %d 个: %s") % [count, preview])
+	_append_log("debug", _t("log.files_changed") % [count, preview])
 
 
 func _on_server_state(_running: bool) -> void:
@@ -3202,7 +3203,7 @@ func _on_server_state(_running: bool) -> void:
 
 func _on_export_started() -> void:
 	_export_started_ms = Time.get_ticks_msec()
-	_append_log("export", _t("开始导出 Web 构建…"))
+	_append_log("export", _t("log.export_started"))
 	_export_button.disabled = true
 	_refresh_status()
 
@@ -3309,15 +3310,15 @@ func _copy_log() -> void:
 		if _log_matches(entry):
 			lines.append("%s [%s] %s" % [entry.time, entry.level, entry.text])
 	DisplayServer.clipboard_set("\n".join(lines))
-	_append_log("info", _t("已复制 %d 条日志") % lines.size())
-	_toast(_t("已复制 %d 条日志") % lines.size())
+	_append_log("info", _t("toast.logs_copied") % lines.size())
+	_toast(_t("toast.logs_copied") % lines.size())
 
 
 func _clear_log() -> void:
 	_log_entries.clear()
 	if _log_view != null:
 		_log_view.clear()
-	_toast(_t("日志已清空"))
+	_toast(_t("toast.logs_cleared"))
 
 
 # ---------------------------------------------------------------------------
@@ -3404,388 +3405,393 @@ func _save_settings() -> void:
 # English UI strings (source keys are the Chinese source text). See `_t`.
 # ---------------------------------------------------------------------------
 
-const I18N_EN: Dictionary = {
-	" · 导出中 %ds": " · exporting %ds",
-	"%d 小时 %d 分": "%dh %dm",
-	"%s\n有效期至 %s · %s…": "%s\nValid until %s · %s…",
-	"- 当前授权：%s\n": "- Current license: %s\n",
-	"- 当前版本：GDLive %s\n": "- Current version: GDLive %s\n",
-	"- 支付凭证：见附件截图\n\n": "- Payment proof: see attached screenshot\n\n",
-	"- 支付方式：微信 / 支付宝\n": "- Payment: WeChat / Alipay\n",
-	"- 机器码：%s\n": "- Machine code: %s\n",
-	"0.0.0.0 · 局域网": "0.0.0.0 · LAN",
-	"1. 在「调试」页确认端口（当前 %d），点顶部「导出」\n": "1. On the Debug tab, confirm the port (currently %d) and click \"Export\" at the top\n",
-	"10 分钟": "10 min",
-	"12 小时": "12 h",
-	"127.0.0.1 · 仅本机": "127.0.0.1 · Local only",
-	"15 分钟": "15 min",
-	"2. 需要线程版时，点下方按钮启用 HTTPS 并安装一次根证书\n": "2. For a threaded build, enable HTTPS below and install the root CA once\n",
-	"24 小时": "24 h",
-	"3. 手机扫码打开游戏；改代码会自动重新导出并刷新\n\n": "3. Scan with your phone to open the game; code changes re-export and refresh automatically\n\n",
-	"30 分钟": "30 min",
-	"45 分钟": "45 min",
-	"5 分钟": "5 min",
-	"6 小时": "6 h",
-	"60 分钟": "60 min",
-	"7 天": "7 days",
-	"Bug 与功能建议请走 GitHub Issues。付款后附上支付截图即可。": "For bugs and feature suggestions use GitHub Issues. Attach a payment screenshot after paying.",
-	"COOP/COEP 已开启：手机连同一 Wi-Fi 扫码即可调试": "COOP/COEP enabled: scan with a phone on the same Wi-Fi to debug",
-	"GDLive · 建议安装根证书": "GDLive · Install Root CA Recommended",
-	"GDLive 就绪": "GDLive ready",
-	"GDLive 用本机根证书给 HTTPS 调试地址签名。\n\n": "GDLive signs the HTTPS debug address with a local root CA.\n\n",
-	"GitHub 仓库": "GitHub Repo",
-	"HTTPS / 根证书是 Pro 功能，激活后可用。": "HTTPS / root CA is a Pro feature, available after activation.",
-	"HTTPS / 根证书需要 Pro 授权，已切换到「支持」页": "HTTPS / root CA requires a Pro license; switched to the Support tab",
-	"HTTPS 已启用，根证书已在本机信任库中": "HTTPS enabled; the root CA is in this machine's trust store",
-	"HTTPS 由本机根证书签发；手机首次使用请到「证书安装」标签页扫码安装根证书": "HTTPS is signed by the local root CA; on first phone use, switch to the Certificate tab and scan to install the root CA",
-	"HTTPS（线程版）": "HTTPS (threads)",
-	"Pro 功能，激活授权后生效": "Pro feature, enabled after activation",
-	"Pro 已授权": "Pro licensed",
-	"Pro 授权激活成功": "Pro license activated",
-	"Pro：单次最长 24 小时": "Pro: up to 24 hours per session",
-	"Pro：导出次数不限": "Pro: unlimited exports",
-	"Studio 已授权": "Studio licensed",
-	"Studio：单次最长 7 天，支持自定义域名": "Studio: up to 7 days per session, custom domains supported",
-	"[GDLive] 授权咨询": "[GDLive] License Inquiry",
-	"[GDLive] 显示首次使用引导": "[GDLive] Showing the first-run guide",
-	"[cmd] 已发送到 %s 个页面：%s": "[cmd] sent to %s page(s): %s",
-	"\n\n目录：\n": "\n\nFolder:\n",
-	"\n当前授权绑定其他机器码：": "\nCurrent license bound to a different machine code: ",
-	"macOS 登录钥匙串 / Windows 用户 Root / Linux p11-kit": "macOS Login Keychain / Windows user Root store / Linux p11-kit",
-	"web 内网调试": "Web LAN debugging",
-	"⏰ 远程试玩即将结束": "⏰ Remote Play ending soon",
-	"⏰ 远程试玩还剩 1 分钟": "⏰ 1 minute left in Remote Play",
-	"⏰ 远程试玩还剩 10 分钟": "⏰ 10 minutes left in Remote Play",
-	"⏰ 远程试玩还剩 5 分钟": "⏰ 5 minutes left in Remote Play",
-	"⏳ 正在建立远程会话…": "⏳ Establishing remote session…",
-	"⏳ 试用中 · 剩余 %d 天（至 %s）": "⏳ Trial · %d day(s) left (until %s)",
-	"① 复制机器码（付款时备注）": "① Copy the machine code (note it when paying)",
-	"② 选择支付方式，扫码付款": "② Pick a payment method and scan to pay",
-	"③ 付款后把「机器码 + 支付截图」发给我们（微信 %s，或点下方「✉ 邮件联系我们」），\n收到授权码后在「支持」页下方粘贴激活。": "③ After paying, send us the \"machine code + payment screenshot\" (WeChat %s, or tap \"✉ Email Us\" below),\nthen paste the license code on the Support tab once you receive it.",
-	"▾ 服务设置": "▾ Server Settings",
-	"○ 尚未生成": "○ Not generated",
-	"○ 已停止": "○ Stopped",
-	"○ 未启动": "○ Not started",
-	"○ 未启动 · 免费/试用单次 15 分钟": "○ Not started · Free/Trial 15 min per session",
-	"● 运行中 · %s · %d 个客户端": "● Running · %s · %d client(s)",
-	"● 远程试玩已启动 · 剩余 %s": "● Remote Play started · %s remaining",
-	"⚠ 未安装到本机信任库": "⚠ Not installed to this machine's trust store",
-	"✉ 写邮件": "✉ Write Email",
-	"✉ 联系我们": "✉ Contact Us",
-	"✉ 邮件联系我们": "✉ Email Us",
-	"✓ %s 已授权 · %s%s": "✓ %s licensed · %s%s",
-	"✓ 局域网访问 + 自动导出 / 热刷新\n": "✓ LAN access + auto export / hot refresh\n",
-	"✓ 已安装到本机信任库": "✓ Installed to this machine's trust store",
-	"✓ 本机根证书 HTTPS（线程版构建需要 SharedArrayBuffer）\n\n": "✓ Local root CA HTTPS (required for threaded builds: SharedArrayBuffer)\n\n",
-	"✓ 浏览器 console / 报错回传 + 页面内调试面板\n": "✓ Browser console / error relay + in-page debug console\n",
-	"「安装到本机」只影响这台电脑；手机 / 平板请扫下方二维码打开安装页。": "\"Install to this machine\" only affects this computer; scan the QR code below to open the install page on a phone or tablet.",
-	"下一步：点「安装根证书」加入本机信任库": "Next: click \"Install Root CA\" to add it to this machine's trust store",
-	"主题": "Subject",
-	"主题与正文已自动填好（含机器码与版本），也可以先修改再发送。付款后请附上支付截图。": "Subject and body are pre-filled (with machine code and version); edit before sending if needed. Attach a payment screenshot after paying.",
-	"二维码": "QR Code",
-	"二维码待生成": "QR code pending",
-	"仅用于受控开发机；私钥 ca-key.pem 不要分享。": "For controlled dev machines only; never share the private key ca-key.pem.",
-	"今日导出 %d/%d · 同时只能运行 1 个项目": "Exports today %d/%d · only 1 project at a time",
-	"从剪贴板粘贴授权码": "Paste the license code from clipboard",
-	"你好，\n\n": "Hello,\n\n",
-	"使用引导": "Quick Start",
-	"停止": "Stop",
-	"先启动服务器": "Start the server first",
-	"先启动服务器，再打开二维码页面": "Start the server before opening the QR page",
-	"先启动服务器，再打开安装页": "Start the server before opening the install page",
-	"免费/试用：单次最长 15 分钟，每天 30 分钟": "Free/Trial: up to 15 minutes per session, 30 minutes per day",
-	"免费版": "Free",
-	"免费版 · 试用已结束": "Free · trial ended",
-	"免费版今日剩余 %d 次导出": "%d export(s) left today on the Free plan",
-	"免费版今日导出次数已用完，升级 Pro 可无限导出": "Free daily exports used up; upgrade to Pro for unlimited exports",
-	"免费版无法使用 HTTPS，已自动改用 HTTP；升级 Pro 后可启用": "HTTPS is not available on the Free plan; HTTP is used instead. Upgrade to Pro to enable it.",
-	"全部": "All",
-	"关闭": "Close",
-	"关闭后只能手动导出": "When off, export manually",
-	"写入 export_presets.cfg 失败: %s": "Failed to write export_presets.cfg: %s",
-	"创建 Web 预设": "Create Web Preset",
-	"刷新页面": "Refresh Pages",
-	"剪贴板为空": "Clipboard is empty",
-	"即将到期": "Expiring soon",
-	"取消": "Cancel",
-	"可能需要先联系我们解绑。\n\n": "you may need to contact us to unbind a device first.\n\n",
-	"启动": "Start",
-	"启动 / 停止本地服务器": "Start / Stop Local Server",
-	"启动失败: %s": "Start failed: %s",
-	"启动时检查并提示安装根证书": "Check and prompt for root CA install on startup",
-	"启动服务器后显示安装页地址和二维码": "Start the server to show the install page address and QR code",
-	"启动远程试玩失败：": "Failed to start Remote Play:",
-	"启动远程试玩失败：%s": "Failed to start Remote Play: %s",
-	"启用 HTTPS 时自动生成；安装一次后，所有项目、所有 IP 共用。": "Generated automatically when HTTPS is enabled; install once and it's shared across all projects and IPs.",
-	"在 GitHub Issues 反馈 Bug / 功能建议\n": "Report bugs / feature requests on GitHub Issues\n",
-	"在 GitHub Issues 反馈 Bug / 功能建议：": "Report bugs / feature requests on GitHub Issues:",
-	"在浏览器打开 GDLive 官网（文档 / 下载 / 更新日志）": "Open the GDLive website (docs / downloads / changelog)",
-	"在浏览器打开购买页": "Open Purchase Page in Browser",
-	"在浏览器打开赞赏页": "Open Donate Page in Browser",
-	"在页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令）；关闭后页面不再被注入，已打开的页面刷新后生效": "Inject a debug console into pages (console relay / network capture / screenshots / remote commands); pages are no longer injected when off — refresh open pages to apply",
-	"复制": "Copy",
-	"复制地址": "Copy Address",
-	"复制微信": "Copy WeChat",
-	"复制微信号": "Copy WeChat ID",
-	"复制授权 / 购买页地址": "Copy the license / purchase page address",
-	"复制收件人邮箱": "Copy Recipient Email",
-	"复制本机机器码，购买 / 换机时发给我们": "Copy this machine code; send it to us when buying or transferring",
-	"复制机器码": "Copy Machine Code",
-	"复制联系邮箱": "Copy Contact Email",
-	"复制邮件内容": "Copy Email Content",
-	"复制邮箱": "Copy Email",
-	"好友二维码": "Friend QR Code",
-	"好友二维码尚未加载，请稍后重试": "Friend QR code not loaded yet, please try again shortly",
-	"如果 GDLive 帮到了你，欢迎赞助一杯咖啡 ☕\n赞赏完全自愿，不影响授权与功能。": "If GDLive helped you, buy us a coffee ☕\nDonations are entirely voluntary and don't affect licensing or features.",
-	"安装一次即可：所有项目、所有 IP 共用，以后换 IP 也不需要重装。\n": "Install once: shared across all projects and IPs — no reinstall even when your IP changes.\n",
-	"安装到本机": "Install to This Machine",
-	"安装根证书并启用 HTTPS": "Install Root CA & Enable HTTPS",
-	"完成，去激活": "Done, Activate",
-	"官网：": "Website:",
-	"官网：%s（文档 / 下载 / 更新日志）\n": "Website: %s (docs / downloads / changelog)\n",
-	"导出": "Export",
-	"导出: %s": "Export: %s",
-	"导出中…": "Exporting…",
-	"导出后通知页面刷新": "Notify pages to refresh after export",
-	"导出成功后通知所有打开的页面刷新": "Notify all open pages to refresh after export",
-	"导出次数不限 · 可同时运行多个项目": "Unlimited exports · multiple projects at once",
-	"导出预设": "Export Preset",
-	"尚未安装": "Not installed",
-	"局域网地址": "LAN Addresses",
-	"展开 / 收起微信好友二维码，扫码即可添加": "Show / hide the WeChat friend QR code; scan to add us",
-	"已保存截图 → %s（%d×%d）": "Screenshot saved → %s (%d×%d)",
-	"已创建 Web 预设": "Web preset created",
-	"已创建 Web 预设（线程支持关闭，兼容局域网 HTTP）": "Web preset created (threading off, compatible with LAN HTTP)",
-	"已向 %d 个页面请求截图…": "Screenshot requested from %d page(s)…",
-	"已向 %d 个页面请求截图，等待回传…": "Screenshot requested from %d page(s), waiting…",
-	"已在文件管理器打开导出目录": "Export folder opened in file manager",
-	"已在文件管理器打开证书目录": "Certificate folder opened in file manager",
-	"已在浏览器打开 GitHub 仓库：": "GitHub repo opened in browser:",
-	"已在浏览器打开二维码页面": "QR page opened in browser",
-	"已在浏览器打开安装页": "Install page opened in browser",
-	"已在浏览器打开官网：": "Website opened in browser:",
-	"已在浏览器打开支持页": "Support page opened in browser",
-	"已在浏览器打开游戏地址": "Game address opened in browser",
-	"已在浏览器打开调试页": "Debug page opened in browser",
-	"已在浏览器打开赞赏页": "Donate page opened in browser",
-	"已在浏览器打开远程试玩地址": "Remote Play address opened in browser",
-	"已在浏览器打开问题反馈：": "Issue reporter opened in browser:",
-	"已复制 %d 条日志": "Copied %d log entries",
-	"已复制 %s/": "Copied %s/",
-	"已复制 ✓": "Copied ✓",
-	"已复制安装页地址": "Install page address copied",
-	"已复制安装页地址: ": "Install page address copied: ",
-	"已复制微信号": "WeChat ID copied",
-	"已复制微信号：%s": "WeChat ID copied: %s",
-	"已复制支持服务地址": "Support service address copied",
-	"已复制支持页地址": "Support page address copied",
-	"已复制机器码": "Machine code copied",
-	"已复制机器码，购买后发给我们即可换取授权码": "Machine code copied; send it to us after purchase to get your license code",
-	"已复制游戏地址": "Game address copied",
-	"已复制联系邮箱": "Contact email copied",
-	"已复制联系邮箱：%s": "Contact email copied: %s",
-	"已复制远程试玩地址": "Remote Play address copied",
-	"已复制远程试玩地址，可直接粘贴分享": "Remote Play address copied; paste to share",
-	"已复制邮件内容": "Email content copied",
-	"已打开邮件应用：%s": "Mail app opened: %s",
-	"已推送刷新到 %d 个页面": "Refresh pushed to %d page(s)",
-	"已生成新的根证书，设备需重新信任": "New root CA generated; devices must re-trust",
-	"已生成新的根证书：%s（所有设备需要重新信任）": "New root CA generated: %s (all devices must re-trust)",
-	"已生成根证书安装二维码：手机扫码按提示安装；桌面可点「安装到本机」": "Root CA install QR code generated: scan with your phone and follow the prompts; on desktop, click \"Install to This Machine\"",
-	"已移除本机授权": "License removed",
-	"已移除本机授权，回到免费版": "License removed; back to the Free plan",
-	"已自动生成根证书，手机安装二维码已更新": "Root CA generated automatically; phone install QR code updated",
-	"建议流程：\n": "Suggested workflow:\n",
-	"开启，页面刷新后生效": "enabled, takes effect after page refresh",
-	"开始使用": "Get Started",
-	"开始导出 Web 构建…": "Starting Web export…",
-	"开始远程试玩": "Start Remote Play",
-	"微信支付": "WeChat Pay",
-	"微信赞赏": "WeChat Donate",
-	"微信：": "WeChat:",
-	"我想咨询 GDLive Pro 授权（购买 / 续费 / 发票 / 换机 / Studio 团队版）。\n\n": "I'd like to ask about a GDLive Pro license (purchase / renewal / invoice / machine transfer / Studio team plan).\n\n",
-	"截图 %s 不是有效的 PNG（%s）": "Screenshot %s is not a valid PNG (%s)",
-	"截图 %s 解码失败": "Screenshot %s failed to decode",
-	"截图保存失败：%s（%s）": "Failed to save screenshot: %s (%s)",
-	"截图已保存（%d×%d）": "Screenshot saved (%d×%d)",
-	"所有平台的下载、安装步骤、验证与移除说明都在安装页里：手机扫码或点「打开完整安装页」。": "Download, install, verify and removal instructions for all platforms are on the install page: scan with your phone or tap \"Open Full Install Page.\"",
-	"手动": "Manual",
-	"手机扫码打开安装页（HTTP，免证书警告）": "Scan to open the install page (HTTP, no cert warning)",
-	"手机扫码打开游戏": "Scan to open the game on your phone",
-	"手机扫码调试": "Scan with Phone to Debug",
-	"手机端请点「打开安装引导」，按页面提示安装。": "On a phone, tap \"Open Install Guide\" and follow the page prompts.",
-	"手机首次调试：切到「证书安装」标签页，扫描安装二维码。": "First time debugging on a phone: switch to the Certificate tab and scan the install QR code.",
-	"打开": "Open",
-	"打开 GDLive 官网（文档 / 下载 / 更新日志）\n": "Open the GDLive website (docs / downloads / changelog)\n",
-	"打开 GitHub 仓库（%s）\n%s": "Open the GitHub repo (%s)\n%s",
-	"打开大图二维码页面（游戏 / 证书 / 赞赏）": "Open the large QR page (game / cert / donate)",
-	"打开安装引导": "Open Install Guide",
-	"打开完整安装页": "Open Full Install Page",
-	"打开官网": "Open Website",
-	"打开导出目录": "Open Export Folder",
-	"打开授权 / 购买网页": "Open the license / purchase page",
-	"打开授权页": "Open License Page",
-	"打开浏览器": "Open in Browser",
-	"打开编辑器时自动启动服务器": "Start the server automatically when the editor opens",
-	"打开邮件应用": "Open Mail App",
-	"执行": "Run",
-	"执行一次 headless Web 导出": "Run one headless Web export",
-	"把 Godot 项目一键导出成 Web，在 0.0.0.0 上启动服务；手机连同一个 Wi-Fi，扫码即可调试。\n\n": "Export your Godot project to the web with one click and serve it on 0.0.0.0; scan with a phone on the same Wi-Fi to debug.\n\n",
-	"指令发送失败": "Failed to send command",
-	"指令已发送到 %s 个页面": "Command sent to %s page(s)",
-	"授权状态": "License Status",
-	"授权状态 / 升级 Pro": "License / Upgrade Pro",
-	"授权码不会丢失，可用同一个授权码重新激活；如果设备数量已达上限，": "Your license code is not lost and can reactivate the same machine; if the device limit is reached,",
-	"授权码与机器码绑定；换机请联系我们重新签发。激活后重启 GDLive 服务器生效。": "The license code is bound to the machine code; contact us to reissue it when transferring machines. Restart the GDLive server after activation to apply.",
-	"支付宝": "Alipay",
-	"支付宝赞赏": "Alipay Donate",
-	"支持": "Support",
-	"支持服务 31065 被占用（可能是旧的 Godot 实例），当前使用 %s；关闭旧实例后重新加载插件即可恢复 31065": "Support service port 31065 is in use (possibly by an old Godot instance); currently using %s. Close the old instance and reload the plugin to restore 31065.",
-	"支持服务启动失败: %s": "Support service failed to start: %s",
-	"支持服务未启动": "Support service not started",
-	"支持服务未启动，可直接在「支持」页扫码赞赏": "Support service not running; you can scan the QR code on the Support tab to donate",
-	"支持服务未启动，请重启插件或在「支持」页直接粘贴授权码": "Support service not running; restart the plugin or paste the license code directly on the Support tab",
-	"支持服务（独立端口）: ": "Support service (dedicated port): ",
-	"收件人": "To",
-	"收件人邮箱为空，无法打开邮件应用": "Recipient email is empty; can't open the mail app",
-	"收件人：%s\n主题：%s\n\n%s": "To: %s\nSubject: %s\n\n%s",
-	"文件变更 %d 个: %s": "%d file(s) changed: %s",
-	"新证书尚未安装": "New certificate not installed yet",
-	"无法开始导出（可能已有任务在运行）": "Can't start export (a task may already be running)",
-	"无法自动安装，请使用「手机安装引导」手动安装": "Can't install automatically; use the \"Phone Install Guide\" to install manually",
-	"无法自动安装，请手动安装": "Can't install automatically; please install manually",
-	"无法获取 Godot 可执行文件路径，导出可能失败": "Can't locate the Godot executable; export may fail",
-	"日志": "Logs",
-	"日志已清空": "Logs cleared",
-	"界面语言已切换，重新加载插件后生效": "Language changed — reload the plugin to apply",
-	"显示 IPv6 地址": "Show IPv6 addresses",
-	"有效期至 %s": "Valid until %s",
-	"服务器已停止": "Server stopped",
-	"服务器已启动，监听 %s:%d": "Server started, listening on %s:%d",
-	"服务器未启动 · 点顶部「启动」开始监听": "Server not started · click \"Start\" at the top to listen",
-	"服务器未运行，指令未发送": "Server not running; command not sent",
-	"服务器未运行，无法请求截图": "Server not running; can't request screenshots",
-	"服务器默认监听 IPv4（0.0.0.0）；勾选后同时列出本机可用的 IPv6 地址（需路由器与手机支持 IPv6 才能访问）": "The server listens on IPv4 (0.0.0.0) by default; also list local IPv6 addresses when enabled (requires router and phone IPv6 support)",
-	"服务设置": "Server Settings",
-	"未找到邮件应用，邮件内容已复制到剪贴板": "No mail app found; email content copied to clipboard",
-	"未找到邮件应用；内容已复制，可粘贴到网页邮箱": "No mail app found; content copied — paste it into a webmail",
-	"未知": "Unknown",
-	"未知错误": "Unknown error",
-	"未配置邮件客户端时，可用「复制邮件内容」粘贴到网页邮箱。": "No mail client configured? Use \"Copy Email Content\" and paste it into a webmail.",
-	"本机根 CA · 所有项目共用": "Local root CA · shared across all projects",
-	"本机根证书 + TLS": "Local root CA + TLS",
-	"机器码由本机硬件标识本地生成，仅用于授权绑定，不会上传；购买后发给我们换取授权码": "The machine code is generated locally from this machine's hardware ID, used only for license binding and never uploaded; send it to us after purchase to get your license code",
-	"机器码：": "Machine code:",
-	"根证书信任检测：%s": "Root CA trust check: %s",
-	"根证书安装 / 手机扫码": "Install Root CA / Scan with Phone",
-	"根证书安装完成": "Root CA installed",
-	"根证书安装完成：": "Root CA installed:",
-	"根证书尚未生成 · 点「生成根证书」后显示二维码": "Root CA not generated yet · click \"Generate Root CA\" to show the QR code",
-	"根证书尚未生成：启用 HTTPS 或点「生成根证书」": "Root CA not generated yet: enable HTTPS or click \"Generate Root CA\"",
-	"根证书已安装到本机信任库": "Root CA installed to this machine's trust store",
-	"根证书已生成，下一步：安装到本机": "Root CA generated; next step: install it on this machine",
-	"根证书已生成：%s": "Root CA generated: %s",
-	"根证书未安装到本机信任库：%s": "Root CA not in this machine's trust store: %s",
-	"欢迎使用 GDLive": "Welcome to GDLive",
-	"正在停止远程试玩…": "Stopping Remote Play…",
-	"正在安装根证书…": "Installing root CA…",
-	"正在安装根证书到系统信任库…": "Installing root CA into the system trust store…",
-	"正在申请远程试玩会话…": "Requesting remote play session…",
-	"正在进行的远程试玩也会断开。\n\n": "and any active remote play session is disconnected.\n\n",
-	"正文（可编辑）": "Body (editable)",
-	"永久有效": "Permanent",
-	"没有 Web 导出预设：先点「创建 Web 预设」": "No Web export preset — click \"Create Web Preset\" first",
-	"没有已连接的页面": "No connected pages",
-	"没有已连接的页面，截图请求未送达（先在浏览器/手机打开游戏）": "No connected pages; the screenshot request reached no one (open the game in a browser or phone first)",
-	"浏览器打开": "Open in Browser",
-	"浏览器日志回传 / 页面内调试面板是 Pro 功能，激活后重启服务器生效。": "Browser log relay / in-page debug console is a Pro feature; restart the server after activation to apply.",
-	"清空": "Clear",
-	"激活": "Activate",
-	"激活失败: %s": "Activation failed: %s",
-	"激活失败：": "Activation failed:",
-	"激活授权码": "Activate License Code",
-	"激活授权（Ctrl/Cmd+Enter）": "Activate (Ctrl/Cmd+Enter)",
-	"生成根证书": "Generate Root CA",
-	"生成根证书失败": "Failed to generate root CA",
-	"生成根证书失败: %s": "Failed to generate root CA: %s",
-	"用浏览器打开当前局域网地址": "Open the LAN address in a browser",
-	"监听": "Watch",
-	"监听地址": "Listen Address",
-	"监听文件": "Watch Files",
-	"监听项目文件，变更后自动导出": "Watch project files and re-export on change",
-	"监听项目文件，变更后自动执行 headless 导出": "Watch project files and re-export headlessly on change",
-	"目录": "Folder",
-	"确定要移除本机授权吗？": "Remove the license from this machine?",
-	"确认移除": "Confirm Removal",
-	"移除后将立即退出 Pro：HTTPS、远程调试、自动导出等 Pro 功能会关闭，": "Removing deactivates Pro immediately: HTTPS, remote debugging, auto export and other Pro features turn off,",
-	"移除本机授权": "Remove License",
-	"稍后": "Later",
-	"立即安装": "Install Now",
-	"端口": "Port",
-	"端口 / 监听地址 / 自动化选项": "Port / listen address / automation",
-	"粘贴": "Paste",
-	"粘贴授权码 GTL1....（可整段粘贴，自动忽略空格和换行）": "Paste the license code GTL1.... (paste the whole block; spaces and newlines are ignored)",
-	"继续吗？": "Continue?",
-	"续费 / 更换授权": "Renew / Change License",
-	"网络": "Network",
-	"联系我们 · 购买 / 续费 / 发票 / 换机": "Contact · Buy / Renew / Invoice / Machine Transfer",
-	"自动刷新": "Auto Refresh",
-	"自动启动": "Auto Start",
-	"自动安装未完成：": "Auto-install incomplete:",
-	"自动导出": "Auto Export",
-	"自动滚动": "Auto-scroll",
-	"自动生成含机器码与版本的邮件": "Auto-generate an email with the machine code and version",
-	"自动生成含机器码的邮件": "Auto-generate an email with the machine code",
-	"自动生成根证书失败: %s": "Automatic root CA generation failed: %s",
-	"自定义域名（Studio），如 demo.studio.example.com": "Custom domain (Studio), e.g. demo.studio.example.com",
-	"自签根 CA + TLS；线程版 Web 构建需要（SharedArrayBuffer）": "Self-signed root CA + TLS; required for threaded Web builds (SharedArrayBuffer)",
-	"补充说明：\n\n\n": "Notes:\n\n\n",
-	"警告+错误": "Warnings + Errors",
-	"访问密码（可选）": "Access Password (optional)",
-	"证书": "Cert",
-	"证书安装": "Certificate",
-	"证书目录": "Certificate Folder",
-	"证书：%s\n指纹：%s…\n状态：%s\n\n": "Certificate: %s\nFingerprint: %s…\nStatus: %s\n\n",
-	"试用中（剩余 %d 天）": "Trial (%d day(s) left)",
-	"请先粘贴授权码": "Please paste a license code first",
-	"调试": "Debug",
-	"调试页": "Debug Page",
-	"购买 / 升级 Pro": "Buy / Upgrade Pro",
-	"购买 / 续费 / 发票 / 换机请邮件或微信（通常 1 个工作日内回复）；": "For purchases / renewals / invoices / machine transfers, email or WeChat us (usually replies within 1 business day);",
-	"赞赏二维码解码失败: ": "Failed to decode donate QR code: ",
-	"赞赏支持": "Donate",
-	"赞赏支持 GDLive": "Donate to GDLive",
-	"还没有 Web 构建 · 点顶部「导出」生成": "No Web build yet · click \"Export\" at the top to generate one",
-	"还没有 Web 构建，点「立即导出」生成": "No Web build yet — click \"Export Now\" to generate one",
-	"远程": "Remote",
-	"远程指令：输入 JavaScript 表达式发送到已连接的页面（↑↓ 翻历史）": "Remote command: enter a JavaScript expression to send to connected pages (↑↓ for history)",
-	"远程试玩": "Remote Play",
-	"远程试玩地址已复制到剪贴板，可直接粘贴分享": "Remote Play address copied to clipboard; paste to share",
-	"远程调试面板": "Remote Debug Panel",
-	"远程调试面板已": "Remote debug panel ",
-	"退出 Pro 并清除本机授权（会二次确认）": "Deactivate Pro and clear the license on this machine (asks for confirmation)",
-	"选项": "Options",
-	"邮件内容已复制，可粘贴到任意邮箱": "Email content copied; paste it into any mail client",
-	"邮件联系我们": "Email Us",
-	"邮件联系我们（购买 / 续费 / 发票 / 换机）": "Email us (buy / renew / invoice / machine transfer)",
-	"邮件联系我们：购买 / 续费 / 发票 / 换机": "Email us: buy / renew / invoice / machine transfer",
-	"邮箱：": "Email:",
-	"重启 GDLive 服务器后 HTTPS / 页面调试面板生效": "Restart the GDLive server for HTTPS / the in-page debug console to take effect",
-	"重新检测信任": "Recheck Trust",
-	"重新生成 CA": "Regenerate CA",
-	"重新生成后，根证书会换新：所有设备（包括这台电脑）都需要重新安装/信任。\n\n": "Regenerating replaces the root CA: every device (including this computer) must reinstall / re-trust it.\n\n",
-	"重新生成失败: %s": "Regeneration failed: %s",
-	"重新生成失败：": "Regeneration failed:",
-	"重新生成根证书": "Regenerate Root CA",
-	"问题反馈": "Report Issue",
-	"问题反馈：%s（GitHub Issues）\n": "Feedback: %s (GitHub Issues)\n",
-	"随时点右上角「?」重新打开本引导。": "Reopen this guide anytime via the \"?\" at the top right.",
-	"页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令），可随时关闭": "Inject a debug console into pages (console relay / network capture / screenshots / remote commands); can be turned off anytime",
-	"项目: %s": "Project: %s",
-	"预设：%s": "Preset: %s",
-	"预设：未找到 Web 预设": "Preset: no Web preset found",
-	"（付款后请附上支付截图；收到授权码后，在插件「支持」页粘贴激活。）\n": "(Attach a payment screenshot after paying; once you receive the license code, paste it on the plugin's Support tab to activate.)\n",
-	"🌐 官网": "🌐 Website",
-	"🌐 打开官网": "🌐 Open Website",
-	"📷 截图": "📷 Screenshot",
+
+# ---------------------------------------------------------------------------
+# UI strings: semantic key -> {zh, en}. See `_t`; `_zh` picks the language.
+# ---------------------------------------------------------------------------
+
+const I18N: Dictionary = {
+	"activate.hint": {"zh": "授权码与机器码绑定；换机请联系我们重新签发。激活后重启 GDLive 服务器生效。", "en": "The license code is bound to the machine code; contact us to reissue it when transferring machines. Restart the GDLive server after activation to apply."},
+	"activate.paste_tooltip": {"zh": "从剪贴板粘贴授权码", "en": "Paste the license code from clipboard"},
+	"activate.placeholder": {"zh": "粘贴授权码 GTL1....（可整段粘贴，自动忽略空格和换行）", "en": "Paste the license code GTL1.... (paste the whole block; spaces and newlines are ignored)"},
+	"activate.title": {"zh": "激活授权码", "en": "Activate License Code"},
+	"activate.tooltip": {"zh": "激活授权（Ctrl/Cmd+Enter）", "en": "Activate (Ctrl/Cmd+Enter)"},
+	"buy.alipay": {"zh": "支付宝", "en": "Alipay"},
+	"buy.done": {"zh": "完成，去激活", "en": "Done, Activate"},
+	"buy.email_tooltip": {"zh": "自动生成含机器码的邮件", "en": "Auto-generate an email with the machine code"},
+	"buy.email_us": {"zh": "✉ 邮件联系我们", "en": "✉ Email Us"},
+	"buy.open_page": {"zh": "在浏览器打开购买页", "en": "Open Purchase Page in Browser"},
+	"buy.step1": {"zh": "① 复制机器码（付款时备注）", "en": "① Copy the machine code (note it when paying)"},
+	"buy.step2": {"zh": "② 选择支付方式，扫码付款", "en": "② Pick a payment method and scan to pay"},
+	"buy.step3": {"zh": "③ 付款后把「机器码 + 支付截图」发给我们（微信 %s，或点下方「✉ 邮件联系我们」），\n收到授权码后在「支持」页下方粘贴激活。", "en": "③ After paying, send us the \"machine code + payment screenshot\" (WeChat %s, or tap \"✉ Email Us\" below),\nthen paste the license code on the Support tab once you receive it."},
+	"buy.title": {"zh": "购买 / 升级 Pro", "en": "Buy / Upgrade Pro"},
+	"buy.wechat_pay": {"zh": "微信支付", "en": "WeChat Pay"},
+	"ca_prompt.guide": {"zh": "打开安装引导", "en": "Open Install Guide"},
+	"ca_prompt.install": {"zh": "立即安装", "en": "Install Now"},
+	"ca_prompt.later": {"zh": "稍后", "en": "Later"},
+	"ca_prompt.text1": {"zh": "GDLive 用本机根证书给 HTTPS 调试地址签名。\n\n", "en": "GDLive signs the HTTPS debug address with a local root CA.\n\n"},
+	"ca_prompt.text2": {"zh": "证书：%s\n指纹：%s…\n状态：%s\n\n", "en": "Certificate: %s\nFingerprint: %s…\nStatus: %s\n\n"},
+	"ca_prompt.text3": {"zh": "安装一次即可：所有项目、所有 IP 共用，以后换 IP 也不需要重装。\n", "en": "Install once: shared across all projects and IPs — no reinstall even when your IP changes.\n"},
+	"ca_prompt.text4": {"zh": "手机端请点「打开安装引导」，按页面提示安装。", "en": "On a phone, tap \"Open Install Guide\" and follow the page prompts."},
+	"ca_prompt.title": {"zh": "GDLive · 建议安装根证书", "en": "GDLive · Install Root CA Recommended"},
+	"cert.auto_hint": {"zh": "启用 HTTPS 时自动生成；安装一次后，所有项目、所有 IP 共用。", "en": "Generated automatically when HTTPS is enabled; install once and it's shared across all projects and IPs."},
+	"cert.check_on_start": {"zh": "启动时检查并提示安装根证书", "en": "Check and prompt for root CA install on startup"},
+	"cert.detail": {"zh": "%s\n有效期至 %s · %s…", "en": "%s\nValid until %s · %s…"},
+	"cert.dir_label": {"zh": "\n\n目录：\n", "en": "\n\nFolder:\n"},
+	"cert.folder": {"zh": "证书目录", "en": "Certificate Folder"},
+	"cert.full_hint": {"zh": "所有平台的下载、安装步骤、验证与移除说明都在安装页里：手机扫码或点「打开完整安装页」。", "en": "Download, install, verify and removal instructions for all platforms are on the install page: scan with your phone or tap \"Open Full Install Page.\""},
+	"cert.generate": {"zh": "生成根证书", "en": "Generate Root CA"},
+	"cert.install_hint": {"zh": "「安装到本机」只影响这台电脑；手机 / 平板请扫下方二维码打开安装页。", "en": "\"Install to this machine\" only affects this computer; scan the QR code below to open the install page on a phone or tablet."},
+	"cert.install_local": {"zh": "安装到本机", "en": "Install to This Machine"},
+	"cert.new_not_installed": {"zh": "新证书尚未安装", "en": "New certificate not installed yet"},
+	"cert.not_generated": {"zh": "○ 尚未生成", "en": "○ Not generated"},
+	"cert.not_generated_hint": {"zh": "根证书尚未生成：启用 HTTPS 或点「生成根证书」", "en": "Root CA not generated yet: enable HTTPS or click \"Generate Root CA\""},
+	"cert.not_installed": {"zh": "尚未安装", "en": "Not installed"},
+	"cert.not_trusted": {"zh": "⚠ 未安装到本机信任库", "en": "⚠ Not installed to this machine's trust store"},
+	"cert.open_full_page": {"zh": "打开完整安装页", "en": "Open Full Install Page"},
+	"cert.private_key_warning": {"zh": "仅用于受控开发机；私钥 ca-key.pem 不要分享。", "en": "For controlled dev machines only; never share the private key ca-key.pem."},
+	"cert.qr_pending": {"zh": "二维码待生成", "en": "QR code pending"},
+	"cert.qr_pending_hint": {"zh": "根证书尚未生成 · 点「生成根证书」后显示二维码", "en": "Root CA not generated yet · click \"Generate Root CA\" to show the QR code"},
+	"cert.recheck": {"zh": "重新检测信任", "en": "Recheck Trust"},
+	"cert.regenerate": {"zh": "重新生成 CA", "en": "Regenerate CA"},
+	"cert.scan_hint": {"zh": "手机扫码打开安装页（HTTP，免证书警告）", "en": "Scan to open the install page (HTTP, no cert warning)"},
+	"cert.start_first_hint": {"zh": "启动服务器后显示安装页地址和二维码", "en": "Start the server to show the install page address and QR code"},
+	"cert.stores": {"zh": "macOS 登录钥匙串 / Windows 用户 Root / Linux p11-kit", "en": "macOS Login Keychain / Windows user Root store / Linux p11-kit"},
+	"cert.subtitle": {"zh": "本机根 CA · 所有项目共用", "en": "Local root CA · shared across all projects"},
+	"cert.title": {"zh": "根证书安装 / 手机扫码", "en": "Install Root CA / Scan with Phone"},
+	"cert.trust_check": {"zh": "根证书信任检测：%s", "en": "Root CA trust check: %s"},
+	"cert.trusted": {"zh": "✓ 已安装到本机信任库", "en": "✓ Installed to this machine's trust store"},
+	"common.activate": {"zh": "激活", "en": "Activate"},
+	"common.cancel": {"zh": "取消", "en": "Cancel"},
+	"common.cert_short": {"zh": "证书", "en": "Cert"},
+	"common.clear": {"zh": "清空", "en": "Clear"},
+	"common.copy": {"zh": "复制", "en": "Copy"},
+	"common.copy_address": {"zh": "复制地址", "en": "Copy Address"},
+	"common.copy_machine": {"zh": "复制机器码", "en": "Copy Machine Code"},
+	"common.export": {"zh": "导出", "en": "Export"},
+	"common.open": {"zh": "打开", "en": "Open"},
+	"common.open_browser": {"zh": "打开浏览器", "en": "Open in Browser"},
+	"common.open_website": {"zh": "打开官网", "en": "Open Website"},
+	"common.paste": {"zh": "粘贴", "en": "Paste"},
+	"common.pro_feature": {"zh": "Pro 功能，激活授权后生效", "en": "Pro feature, enabled after activation"},
+	"common.quick_start": {"zh": "使用引导", "en": "Quick Start"},
+	"common.report_issue": {"zh": "问题反馈", "en": "Report Issue"},
+	"common.run": {"zh": "执行", "en": "Run"},
+	"common.start": {"zh": "启动", "en": "Start"},
+	"common.stop": {"zh": "停止", "en": "Stop"},
+	"common.unknown": {"zh": "未知", "en": "Unknown"},
+	"common.unknown_error": {"zh": "未知错误", "en": "Unknown error"},
+	"contact.copy_email": {"zh": "复制邮箱", "en": "Copy Email"},
+	"contact.copy_email_alt": {"zh": "复制联系邮箱", "en": "Copy Contact Email"},
+	"contact.copy_wechat": {"zh": "复制微信", "en": "Copy WeChat"},
+	"contact.copy_wechat_alt": {"zh": "复制微信号", "en": "Copy WeChat ID"},
+	"contact.email": {"zh": "邮箱：", "en": "Email:"},
+	"contact.email_tooltip": {"zh": "自动生成含机器码与版本的邮件", "en": "Auto-generate an email with the machine code and version"},
+	"contact.friend_qr": {"zh": "好友二维码", "en": "Friend QR Code"},
+	"contact.friend_qr_tooltip": {"zh": "展开 / 收起微信好友二维码，扫码即可添加", "en": "Show / hide the WeChat friend QR code; scan to add us"},
+	"contact.github": {"zh": "GitHub 仓库", "en": "GitHub Repo"},
+	"contact.github_tooltip": {"zh": "打开 GitHub 仓库（%s）\n%s", "en": "Open the GitHub repo (%s)\n%s"},
+	"contact.hint_buy": {"zh": "购买 / 续费 / 发票 / 换机请邮件或微信（通常 1 个工作日内回复）；", "en": "For purchases / renewals / invoices / machine transfers, email or WeChat us (usually replies within 1 business day);"},
+	"contact.hint_issues": {"zh": "Bug 与功能建议请走 GitHub Issues。付款后附上支付截图即可。", "en": "For bugs and feature suggestions use GitHub Issues. Attach a payment screenshot after paying."},
+	"contact.issues_tooltip": {"zh": "在 GitHub Issues 反馈 Bug / 功能建议：", "en": "Report bugs / feature requests on GitHub Issues:"},
+	"contact.title": {"zh": "联系我们 · 购买 / 续费 / 发票 / 换机", "en": "Contact · Buy / Renew / Invoice / Machine Transfer"},
+	"contact.website": {"zh": "官网：", "en": "Website:"},
+	"contact.website_tooltip": {"zh": "在浏览器打开 GDLive 官网（文档 / 下载 / 更新日志）", "en": "Open the GDLive website (docs / downloads / changelog)"},
+	"contact.wechat": {"zh": "微信：", "en": "WeChat:"},
+	"contact.write_email": {"zh": "✉ 写邮件", "en": "✉ Write Email"},
+	"debug.create_preset": {"zh": "创建 Web 预设", "en": "Create Web Preset"},
+	"debug.first_phone_hint": {"zh": "手机首次调试：切到「证书安装」标签页，扫描安装二维码。", "en": "First time debugging on a phone: switch to the Certificate tab and scan the install QR code."},
+	"debug.folder": {"zh": "目录", "en": "Folder"},
+	"debug.lan_addrs": {"zh": "局域网地址", "en": "LAN Addresses"},
+	"debug.open_browser": {"zh": "浏览器打开", "en": "Open in Browser"},
+	"debug.open_debug_page": {"zh": "调试页", "en": "Debug Page"},
+	"debug.open_export_dir": {"zh": "打开导出目录", "en": "Open Export Folder"},
+	"debug.preset": {"zh": "导出预设", "en": "Export Preset"},
+	"debug.qr_button": {"zh": "二维码", "en": "QR Code"},
+	"debug.qr_tooltip": {"zh": "打开大图二维码页面（游戏 / 证书 / 赞赏）", "en": "Open the large QR page (game / cert / donate)"},
+	"debug.scan_hint": {"zh": "手机扫码打开游戏", "en": "Scan to open the game on your phone"},
+	"donate.alipay": {"zh": "支付宝赞赏", "en": "Alipay Donate"},
+	"donate.intro": {"zh": "如果 GDLive 帮到了你，欢迎赞助一杯咖啡 ☕\n赞赏完全自愿，不影响授权与功能。", "en": "If GDLive helped you, buy us a coffee ☕\nDonations are entirely voluntary and don't affect licensing or features."},
+	"donate.open_page": {"zh": "在浏览器打开赞赏页", "en": "Open Donate Page in Browser"},
+	"donate.title": {"zh": "赞赏支持", "en": "Donate"},
+	"donate.wechat": {"zh": "微信赞赏", "en": "WeChat Donate"},
+	"email.body": {"zh": "正文（可编辑）", "en": "Body (editable)"},
+	"email.body_footer": {"zh": "（付款后请附上支付截图；收到授权码后，在插件「支持」页粘贴激活。）\n", "en": "(Attach a payment screenshot after paying; once you receive the license code, paste it on the plugin's Support tab to activate.)\n"},
+	"email.body_hello": {"zh": "你好，\n\n", "en": "Hello,\n\n"},
+	"email.body_intro": {"zh": "我想咨询 GDLive Pro 授权（购买 / 续费 / 发票 / 换机 / Studio 团队版）。\n\n", "en": "I'd like to ask about a GDLive Pro license (purchase / renewal / invoice / machine transfer / Studio team plan).\n\n"},
+	"email.body_license": {"zh": "- 当前授权：%s\n", "en": "- Current license: %s\n"},
+	"email.body_machine": {"zh": "- 机器码：%s\n", "en": "- Machine code: %s\n"},
+	"email.body_notes": {"zh": "补充说明：\n\n\n", "en": "Notes:\n\n\n"},
+	"email.body_payment": {"zh": "- 支付方式：微信 / 支付宝\n", "en": "- Payment: WeChat / Alipay\n"},
+	"email.body_proof": {"zh": "- 支付凭证：见附件截图\n\n", "en": "- Payment proof: see attached screenshot\n\n"},
+	"email.body_version": {"zh": "- 当前版本：GDLive %s\n", "en": "- Current version: GDLive %s\n"},
+	"email.compose_text": {"zh": "收件人：%s\n主题：%s\n\n%s", "en": "To: %s\nSubject: %s\n\n%s"},
+	"email.copy_content": {"zh": "复制邮件内容", "en": "Copy Email Content"},
+	"email.copy_to": {"zh": "复制收件人邮箱", "en": "Copy Recipient Email"},
+	"email.hint": {"zh": "未配置邮件客户端时，可用「复制邮件内容」粘贴到网页邮箱。", "en": "No mail client configured? Use \"Copy Email Content\" and paste it into a webmail."},
+	"email.intro": {"zh": "主题与正文已自动填好（含机器码与版本），也可以先修改再发送。付款后请附上支付截图。", "en": "Subject and body are pre-filled (with machine code and version); edit before sending if needed. Attach a payment screenshot after paying."},
+	"email.open_app": {"zh": "打开邮件应用", "en": "Open Mail App"},
+	"email.subject": {"zh": "主题", "en": "Subject"},
+	"email.subject_line": {"zh": "[GDLive] 授权咨询", "en": "[GDLive] License Inquiry"},
+	"email.title": {"zh": "邮件联系我们", "en": "Email Us"},
+	"email.to": {"zh": "收件人", "en": "To"},
+	"header.donate_tooltip": {"zh": "赞赏支持 GDLive", "en": "Donate to GDLive"},
+	"header.email_tooltip": {"zh": "邮件联系我们（购买 / 续费 / 发票 / 换机）", "en": "Email us (buy / renew / invoice / machine transfer)"},
+	"header.export_dir": {"zh": "导出: %s", "en": "Export: %s"},
+	"header.license_badge": {"zh": "授权状态 / 升级 Pro", "en": "License / Upgrade Pro"},
+	"header.project": {"zh": "项目: %s", "en": "Project: %s"},
+	"header.ready": {"zh": "GDLive 就绪", "en": "GDLive ready"},
+	"header.subtitle": {"zh": "web 内网调试", "en": "Web LAN debugging"},
+	"hint.https_pro": {"zh": "HTTPS / 根证书是 Pro 功能，激活后可用。", "en": "HTTPS / root CA is a Pro feature, available after activation."},
+	"hint.overlay_pro": {"zh": "浏览器日志回传 / 页面内调试面板是 Pro 功能，激活后重启服务器生效。", "en": "Browser log relay / in-page debug console is a Pro feature; restart the server after activation to apply."},
+	"lang.changed_toast": {"zh": "界面语言已切换，重新加载插件后生效", "en": "Language changed — reload the plugin to apply"},
+	"log.activate_failed": {"zh": "激活失败: %s", "en": "Activation failed: %s"},
+	"log.cert_auto_failed": {"zh": "自动生成根证书失败: %s", "en": "Automatic root CA generation failed: %s"},
+	"log.cert_failed": {"zh": "生成根证书失败: %s", "en": "Failed to generate root CA: %s"},
+	"log.cert_generated": {"zh": "根证书已生成：%s", "en": "Root CA generated: %s"},
+	"log.cert_installed_detail": {"zh": "根证书安装完成：", "en": "Root CA installed:"},
+	"log.cert_installing": {"zh": "正在安装根证书到系统信任库…", "en": "Installing root CA into the system trust store…"},
+	"log.cert_installing_alt": {"zh": "正在安装根证书…", "en": "Installing root CA…"},
+	"log.cert_next_step": {"zh": "下一步：点「安装根证书」加入本机信任库", "en": "Next: click \"Install Root CA\" to add it to this machine's trust store"},
+	"log.cert_next_step_alt": {"zh": "根证书已生成，下一步：安装到本机", "en": "Root CA generated; next step: install it on this machine"},
+	"log.cert_not_trusted": {"zh": "根证书未安装到本机信任库：%s", "en": "Root CA not in this machine's trust store: %s"},
+	"log.cert_qr_ready": {"zh": "已生成根证书安装二维码：手机扫码按提示安装；桌面可点「安装到本机」", "en": "Root CA install QR code generated: scan with your phone and follow the prompts; on desktop, click \"Install to This Machine\""},
+	"log.cert_rotated": {"zh": "已生成新的根证书：%s（所有设备需要重新信任）", "en": "New root CA generated: %s (all devices must re-trust)"},
+	"log.cert_trusted": {"zh": "根证书已安装到本机信任库", "en": "Root CA installed to this machine's trust store"},
+	"log.cmd_sent_detail": {"zh": "[cmd] 已发送到 %s 个页面：%s", "en": "[cmd] sent to %s page(s): %s"},
+	"log.donate_qr_failed": {"zh": "赞赏二维码解码失败: ", "en": "Failed to decode donate QR code: "},
+	"log.export_busy": {"zh": "无法开始导出（可能已有任务在运行）", "en": "Can't start export (a task may already be running)"},
+	"log.export_started": {"zh": "开始导出 Web 构建…", "en": "Starting Web export…"},
+	"log.files_changed": {"zh": "文件变更 %d 个: %s", "en": "%d file(s) changed: %s"},
+	"log.https_ready": {"zh": "HTTPS 已启用，根证书已在本机信任库中", "en": "HTTPS enabled; the root CA is in this machine's trust store"},
+	"log.https_signed": {"zh": "HTTPS 由本机根证书签发；手机首次使用请到「证书安装」标签页扫码安装根证书", "en": "HTTPS is signed by the local root CA; on first phone use, switch to the Certificate tab and scan to install the root CA"},
+	"log.no_build": {"zh": "还没有 Web 构建，点「立即导出」生成", "en": "No Web build yet — click \"Export Now\" to generate one"},
+	"log.no_godot_bin": {"zh": "无法获取 Godot 可执行文件路径，导出可能失败", "en": "Can't locate the Godot executable; export may fail"},
+	"log.no_preset": {"zh": "没有 Web 导出预设：先点「创建 Web 预设」", "en": "No Web export preset — click \"Create Web Preset\" first"},
+	"log.onboard_shown": {"zh": "[GDLive] 显示首次使用引导", "en": "[GDLive] Showing the first-run guide"},
+	"log.preset": {"zh": "预设：%s", "en": "Preset: %s"},
+	"log.preset_created": {"zh": "已创建 Web 预设", "en": "Web preset created"},
+	"log.preset_created_http": {"zh": "已创建 Web 预设（线程支持关闭，兼容局域网 HTTP）", "en": "Web preset created (threading off, compatible with LAN HTTP)"},
+	"log.preset_missing": {"zh": "预设：未找到 Web 预设", "en": "Preset: no Web preset found"},
+	"log.preset_write_failed": {"zh": "写入 export_presets.cfg 失败: %s", "en": "Failed to write export_presets.cfg: %s"},
+	"log.remote_requesting": {"zh": "正在申请远程试玩会话…", "en": "Requesting remote play session…"},
+	"log.remote_start_failed": {"zh": "启动远程试玩失败：%s", "en": "Failed to start Remote Play: %s"},
+	"log.rotate_failed": {"zh": "重新生成失败: %s", "en": "Regeneration failed: %s"},
+	"log.server_started": {"zh": "服务器已启动，监听 %s:%d", "en": "Server started, listening on %s:%d"},
+	"log.shot_decode_failed": {"zh": "截图 %s 解码失败", "en": "Screenshot %s failed to decode"},
+	"log.shot_not_png": {"zh": "截图 %s 不是有效的 PNG（%s）", "en": "Screenshot %s is not a valid PNG (%s)"},
+	"log.shot_requested": {"zh": "已向 %d 个页面请求截图，等待回传…", "en": "Screenshot requested from %d page(s), waiting…"},
+	"log.shot_requested_alt": {"zh": "已向 %d 个页面请求截图…", "en": "Screenshot requested from %d page(s)…"},
+	"log.shot_save_failed": {"zh": "截图保存失败：%s（%s）", "en": "Failed to save screenshot: %s (%s)"},
+	"log.shot_saved": {"zh": "已保存截图 → %s（%d×%d）", "en": "Screenshot saved → %s (%d×%d)"},
+	"log.start_failed": {"zh": "启动失败: %s", "en": "Start failed: %s"},
+	"log.support_failed": {"zh": "支持服务启动失败: %s", "en": "Support service failed to start: %s"},
+	"log.support_port_busy": {"zh": "支持服务 31065 被占用（可能是旧的 Godot 实例），当前使用 %s；关闭旧实例后重新加载插件即可恢复 31065", "en": "Support service port 31065 is in use (possibly by an old Godot instance); currently using %s. Close the old instance and reload the plugin to restore 31065."},
+	"log.support_running": {"zh": "支持服务（独立端口）: ", "en": "Support service (dedicated port): "},
+	"logs.autoscroll": {"zh": "自动滚动", "en": "Auto-scroll"},
+	"logs.cmd_placeholder": {"zh": "远程指令：输入 JavaScript 表达式发送到已连接的页面（↑↓ 翻历史）", "en": "Remote command: enter a JavaScript expression to send to connected pages (↑↓ for history)"},
+	"logs.filter_all": {"zh": "全部", "en": "All"},
+	"logs.filter_network": {"zh": "网络", "en": "Network"},
+	"logs.filter_warnings": {"zh": "警告+错误", "en": "Warnings + Errors"},
+	"logs.refresh_pages": {"zh": "刷新页面", "en": "Refresh Pages"},
+	"logs.screenshot": {"zh": "📷 截图", "en": "📷 Screenshot"},
+	"onboard.bullet1": {"zh": "✓ 局域网访问 + 自动导出 / 热刷新\n", "en": "✓ LAN access + auto export / hot refresh\n"},
+	"onboard.bullet2": {"zh": "✓ 浏览器 console / 报错回传 + 页面内调试面板\n", "en": "✓ Browser console / error relay + in-page debug console\n"},
+	"onboard.bullet3": {"zh": "✓ 本机根证书 HTTPS（线程版构建需要 SharedArrayBuffer）\n\n", "en": "✓ Local root CA HTTPS (required for threaded builds: SharedArrayBuffer)\n\n"},
+	"onboard.close": {"zh": "关闭", "en": "Close"},
+	"onboard.feedback": {"zh": "问题反馈：%s（GitHub Issues）\n", "en": "Feedback: %s (GitHub Issues)\n"},
+	"onboard.install_ca": {"zh": "安装根证书并启用 HTTPS", "en": "Install Root CA & Enable HTTPS"},
+	"onboard.open_website": {"zh": "🌐 打开官网", "en": "🌐 Open Website"},
+	"onboard.reopen_hint": {"zh": "随时点右上角「?」重新打开本引导。", "en": "Reopen this guide anytime via the \"?\" at the top right."},
+	"onboard.start": {"zh": "开始使用", "en": "Get Started"},
+	"onboard.step1": {"zh": "1. 在「调试」页确认端口（当前 %d），点顶部「导出」\n", "en": "1. On the Debug tab, confirm the port (currently %d) and click \"Export\" at the top\n"},
+	"onboard.step2": {"zh": "2. 需要线程版时，点下方按钮启用 HTTPS 并安装一次根证书\n", "en": "2. For a threaded build, enable HTTPS below and install the root CA once\n"},
+	"onboard.step3": {"zh": "3. 手机扫码打开游戏；改代码会自动重新导出并刷新\n\n", "en": "3. Scan with your phone to open the game; code changes re-export and refresh automatically\n\n"},
+	"onboard.steps_title": {"zh": "建议流程：\n", "en": "Suggested workflow:\n"},
+	"onboard.text1": {"zh": "把 Godot 项目一键导出成 Web，在 0.0.0.0 上启动服务；手机连同一个 Wi-Fi，扫码即可调试。\n\n", "en": "Export your Godot project to the web with one click and serve it on 0.0.0.0; scan with a phone on the same Wi-Fi to debug.\n\n"},
+	"onboard.title": {"zh": "欢迎使用 GDLive", "en": "Welcome to GDLive"},
+	"onboard.website": {"zh": "官网：%s（文档 / 下载 / 更新日志）\n", "en": "Website: %s (docs / downloads / changelog)\n"},
+	"qr.contact": {"zh": "✉ 联系我们", "en": "✉ Contact Us"},
+	"qr.contact_tooltip": {"zh": "邮件联系我们：购买 / 续费 / 发票 / 换机", "en": "Email us: buy / renew / invoice / machine transfer"},
+	"qr.game_hint": {"zh": "COOP/COEP 已开启：手机连同一 Wi-Fi 扫码即可调试", "en": "COOP/COEP enabled: scan with a phone on the same Wi-Fi to debug"},
+	"qr.game_title": {"zh": "手机扫码调试", "en": "Scan with Phone to Debug"},
+	"qr.issues_tooltip": {"zh": "在 GitHub Issues 反馈 Bug / 功能建议\n", "en": "Report bugs / feature requests on GitHub Issues\n"},
+	"qr.website": {"zh": "🌐 官网", "en": "🌐 Website"},
+	"qr.website_tooltip": {"zh": "打开 GDLive 官网（文档 / 下载 / 更新日志）\n", "en": "Open the GDLive website (docs / downloads / changelog)\n"},
+	"remote.custom_domain": {"zh": "自定义域名（Studio），如 demo.studio.example.com", "en": "Custom domain (Studio), e.g. demo.studio.example.com"},
+	"remote.establishing": {"zh": "⏳ 正在建立远程会话…", "en": "⏳ Establishing remote session…"},
+	"remote.expiring_soon": {"zh": "即将到期", "en": "Expiring soon"},
+	"remote.limit_free": {"zh": "免费/试用：单次最长 15 分钟，每天 30 分钟", "en": "Free/Trial: up to 15 minutes per session, 30 minutes per day"},
+	"remote.limit_pro": {"zh": "Pro：单次最长 24 小时", "en": "Pro: up to 24 hours per session"},
+	"remote.limit_studio": {"zh": "Studio：单次最长 7 天，支持自定义域名", "en": "Studio: up to 7 days per session, custom domains supported"},
+	"remote.not_started_free": {"zh": "○ 未启动 · 免费/试用单次 15 分钟", "en": "○ Not started · Free/Trial 15 min per session"},
+	"remote.password": {"zh": "访问密码（可选）", "en": "Access Password (optional)"},
+	"remote.remaining_hours": {"zh": "%d 小时 %d 分", "en": "%dh %dm"},
+	"remote.running": {"zh": "● 远程试玩已启动 · 剩余 %s", "en": "● Remote Play started · %s remaining"},
+	"remote.start": {"zh": "开始远程试玩", "en": "Start Remote Play"},
+	"remote.title": {"zh": "远程试玩", "en": "Remote Play"},
+	"remote.ttl_10m": {"zh": "10 分钟", "en": "10 min"},
+	"remote.ttl_12h": {"zh": "12 小时", "en": "12 h"},
+	"remote.ttl_15m": {"zh": "15 分钟", "en": "15 min"},
+	"remote.ttl_24h": {"zh": "24 小时", "en": "24 h"},
+	"remote.ttl_30m": {"zh": "30 分钟", "en": "30 min"},
+	"remote.ttl_45m": {"zh": "45 分钟", "en": "45 min"},
+	"remote.ttl_5m": {"zh": "5 分钟", "en": "5 min"},
+	"remote.ttl_60m": {"zh": "60 分钟", "en": "60 min"},
+	"remote.ttl_6h": {"zh": "6 小时", "en": "6 h"},
+	"remote.ttl_7d": {"zh": "7 天", "en": "7 days"},
+	"remove.text1": {"zh": "移除后将立即退出 Pro：HTTPS、远程调试、自动导出等 Pro 功能会关闭，", "en": "Removing deactivates Pro immediately: HTTPS, remote debugging, auto export and other Pro features turn off,"},
+	"remove.text2": {"zh": "正在进行的远程试玩也会断开。\n\n", "en": "and any active remote play session is disconnected.\n\n"},
+	"remove.text3": {"zh": "授权码不会丢失，可用同一个授权码重新激活；如果设备数量已达上限，", "en": "Your license code is not lost and can reactivate the same machine; if the device limit is reached,"},
+	"remove.text4": {"zh": "可能需要先联系我们解绑。\n\n", "en": "you may need to contact us to unbind a device first.\n\n"},
+	"remove.text5": {"zh": "确定要移除本机授权吗？", "en": "Remove the license from this machine?"},
+	"remove.title": {"zh": "确认移除", "en": "Confirm Removal"},
+	"rotate.confirm": {"zh": "继续吗？", "en": "Continue?"},
+	"rotate.text": {"zh": "重新生成后，根证书会换新：所有设备（包括这台电脑）都需要重新安装/信任。\n\n", "en": "Regenerating replaces the root CA: every device (including this computer) must reinstall / re-trust it.\n\n"},
+	"rotate.title": {"zh": "重新生成根证书", "en": "Regenerate Root CA"},
+	"settings.auto_export": {"zh": "自动导出", "en": "Auto Export"},
+	"settings.auto_export_tip": {"zh": "监听项目文件，变更后自动执行 headless 导出", "en": "Watch project files and re-export headlessly on change"},
+	"settings.auto_export_tip_short": {"zh": "监听项目文件，变更后自动导出", "en": "Watch project files and re-export on change"},
+	"settings.auto_reload": {"zh": "自动刷新", "en": "Auto Refresh"},
+	"settings.auto_reload_tip": {"zh": "导出成功后通知所有打开的页面刷新", "en": "Notify all open pages to refresh after export"},
+	"settings.auto_reload_tip_short": {"zh": "导出后通知页面刷新", "en": "Notify pages to refresh after export"},
+	"settings.auto_start": {"zh": "自动启动", "en": "Auto Start"},
+	"settings.auto_start_tip": {"zh": "打开编辑器时自动启动服务器", "en": "Start the server automatically when the editor opens"},
+	"settings.debug_overlay": {"zh": "远程调试面板", "en": "Remote Debug Panel"},
+	"settings.debug_overlay_tip": {"zh": "在页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令）；关闭后页面不再被注入，已打开的页面刷新后生效", "en": "Inject a debug console into pages (console relay / network capture / screenshots / remote commands); pages are no longer injected when off — refresh open pages to apply"},
+	"settings.debug_overlay_tip_short": {"zh": "页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令），可随时关闭", "en": "Inject a debug console into pages (console relay / network capture / screenshots / remote commands); can be turned off anytime"},
+	"settings.host_lan": {"zh": "0.0.0.0 · 局域网", "en": "0.0.0.0 · LAN"},
+	"settings.host_local": {"zh": "127.0.0.1 · 仅本机", "en": "127.0.0.1 · Local only"},
+	"settings.https": {"zh": "HTTPS（线程版）", "en": "HTTPS (threads)"},
+	"settings.https_tip": {"zh": "自签根 CA + TLS；线程版 Web 构建需要（SharedArrayBuffer）", "en": "Self-signed root CA + TLS; required for threaded Web builds (SharedArrayBuffer)"},
+	"settings.https_tip_short": {"zh": "本机根证书 + TLS", "en": "Local root CA + TLS"},
+	"settings.listen_addr": {"zh": "监听地址", "en": "Listen Address"},
+	"settings.manual": {"zh": "手动", "en": "Manual"},
+	"settings.options": {"zh": "选项", "en": "Options"},
+	"settings.port": {"zh": "端口", "en": "Port"},
+	"settings.show_v6": {"zh": "显示 IPv6 地址", "en": "Show IPv6 addresses"},
+	"settings.show_v6_tip": {"zh": "服务器默认监听 IPv4（0.0.0.0）；勾选后同时列出本机可用的 IPv6 地址（需路由器与手机支持 IPv6 才能访问）", "en": "The server listens on IPv4 (0.0.0.0) by default; also list local IPv6 addresses when enabled (requires router and phone IPv6 support)"},
+	"settings.title": {"zh": "服务设置", "en": "Server Settings"},
+	"settings.toggle": {"zh": "▾ 服务设置", "en": "▾ Server Settings"},
+	"settings.watch": {"zh": "监听文件", "en": "Watch Files"},
+	"settings.watch_short": {"zh": "监听", "en": "Watch"},
+	"settings.watch_tip": {"zh": "关闭后只能手动导出", "en": "When off, export manually"},
+	"status.exporting": {"zh": "导出中…", "en": "Exporting…"},
+	"status.exporting_secs": {"zh": " · 导出中 %ds", "en": " · exporting %ds"},
+	"status.no_build": {"zh": "还没有 Web 构建 · 点顶部「导出」生成", "en": "No Web build yet · click \"Export\" at the top to generate one"},
+	"status.not_running": {"zh": "服务器未启动 · 点顶部「启动」开始监听", "en": "Server not started · click \"Start\" at the top to listen"},
+	"status.not_started": {"zh": "○ 未启动", "en": "○ Not started"},
+	"status.running": {"zh": "● 运行中 · %s · %d 个客户端", "en": "● Running · %s · %d client(s)"},
+	"status.server_stopped": {"zh": "服务器已停止", "en": "Server stopped"},
+	"status.stopped": {"zh": "○ 已停止", "en": "○ Stopped"},
+	"status.support_off": {"zh": "支持服务未启动", "en": "Support service not started"},
+	"summary.export_once": {"zh": "执行一次 headless Web 导出", "en": "Run one headless Web export"},
+	"summary.open_lan": {"zh": "用浏览器打开当前局域网地址", "en": "Open the LAN address in a browser"},
+	"summary.settings_tooltip": {"zh": "端口 / 监听地址 / 自动化选项", "en": "Port / listen address / automation"},
+	"summary.start_stop": {"zh": "启动 / 停止本地服务器", "en": "Start / Stop Local Server"},
+	"support.bound_other_alt": {"zh": "\n当前授权绑定其他机器码：", "en": "\nCurrent license bound to a different machine code: "},
+	"support.copy_machine_tooltip": {"zh": "复制本机机器码，购买 / 换机时发给我们", "en": "Copy this machine code; send it to us when buying or transferring"},
+	"support.copy_page_tooltip": {"zh": "复制授权 / 购买页地址", "en": "Copy the license / purchase page address"},
+	"support.free": {"zh": "免费版", "en": "Free"},
+	"support.machine_code": {"zh": "机器码：", "en": "Machine code:"},
+	"support.machine_tooltip": {"zh": "机器码由本机硬件标识本地生成，仅用于授权绑定，不会上传；购买后发给我们换取授权码", "en": "The machine code is generated locally from this machine's hardware ID, used only for license binding and never uploaded; send it to us after purchase to get your license code"},
+	"support.open_page": {"zh": "打开授权页", "en": "Open License Page"},
+	"support.open_page_tooltip": {"zh": "打开授权 / 购买网页", "en": "Open the license / purchase page"},
+	"support.permanent": {"zh": "永久有效", "en": "Permanent"},
+	"support.pro_licensed": {"zh": "Pro 已授权", "en": "Pro licensed"},
+	"support.quota_free": {"zh": "今日导出 %d/%d · 同时只能运行 1 个项目", "en": "Exports today %d/%d · only 1 project at a time"},
+	"support.quota_pro": {"zh": "导出次数不限 · 可同时运行多个项目", "en": "Unlimited exports · multiple projects at once"},
+	"support.remove_license": {"zh": "移除本机授权", "en": "Remove License"},
+	"support.remove_tooltip": {"zh": "退出 Pro 并清除本机授权（会二次确认）", "en": "Deactivate Pro and clear the license on this machine (asks for confirmation)"},
+	"support.renew": {"zh": "续费 / 更换授权", "en": "Renew / Change License"},
+	"support.status_free": {"zh": "免费版 · 试用已结束", "en": "Free · trial ended"},
+	"support.status_licensed": {"zh": "✓ %s 已授权 · %s%s", "en": "✓ %s licensed · %s%s"},
+	"support.status_title": {"zh": "授权状态", "en": "License Status"},
+	"support.status_trial": {"zh": "⏳ 试用中 · 剩余 %d 天（至 %s）", "en": "⏳ Trial · %d day(s) left (until %s)"},
+	"support.studio_licensed": {"zh": "Studio 已授权", "en": "Studio licensed"},
+	"support.trial_days": {"zh": "试用中（剩余 %d 天）", "en": "Trial (%d day(s) left)"},
+	"support.valid_until": {"zh": "有效期至 %s", "en": "Valid until %s"},
+	"tab.cert": {"zh": "证书安装", "en": "Certificate"},
+	"tab.debug": {"zh": "调试", "en": "Debug"},
+	"tab.logs": {"zh": "日志", "en": "Logs"},
+	"tab.remote": {"zh": "远程", "en": "Remote"},
+	"tab.support": {"zh": "支持", "en": "Support"},
+	"toast.activate_failed": {"zh": "激活失败：", "en": "Activation failed:"},
+	"toast.activated": {"zh": "Pro 授权激活成功", "en": "Pro license activated"},
+	"toast.cert_auto_incomplete": {"zh": "自动安装未完成：", "en": "Auto-install incomplete:"},
+	"toast.cert_dir_opened": {"zh": "已在文件管理器打开证书目录", "en": "Certificate folder opened in file manager"},
+	"toast.cert_failed": {"zh": "生成根证书失败", "en": "Failed to generate root CA"},
+	"toast.cert_generated": {"zh": "已自动生成根证书，手机安装二维码已更新", "en": "Root CA generated automatically; phone install QR code updated"},
+	"toast.cert_installed": {"zh": "根证书安装完成", "en": "Root CA installed"},
+	"toast.cert_manual": {"zh": "无法自动安装，请手动安装", "en": "Can't install automatically; please install manually"},
+	"toast.cert_manual_phone": {"zh": "无法自动安装，请使用「手机安装引导」手动安装", "en": "Can't install automatically; use the \"Phone Install Guide\" to install manually"},
+	"toast.cert_rotated": {"zh": "已生成新的根证书，设备需重新信任", "en": "New root CA generated; devices must re-trust"},
+	"toast.clipboard_empty": {"zh": "剪贴板为空", "en": "Clipboard is empty"},
+	"toast.cmd_failed": {"zh": "指令发送失败", "en": "Failed to send command"},
+	"toast.cmd_no_server": {"zh": "服务器未运行，指令未发送", "en": "Server not running; command not sent"},
+	"toast.cmd_sent": {"zh": "指令已发送到 %s 个页面", "en": "Command sent to %s page(s)"},
+	"toast.contact_email_copied": {"zh": "已复制联系邮箱", "en": "Contact email copied"},
+	"toast.contact_email_copied_detail": {"zh": "已复制联系邮箱：%s", "en": "Contact email copied: %s"},
+	"toast.copied": {"zh": "已复制 ✓", "en": "Copied ✓"},
+	"toast.debug_overlay_on": {"zh": "开启，页面刷新后生效", "en": "enabled, takes effect after page refresh"},
+	"toast.debug_overlay_prefix": {"zh": "远程调试面板已", "en": "Remote debug panel "},
+	"toast.debug_page_opened": {"zh": "已在浏览器打开调试页", "en": "Debug page opened in browser"},
+	"toast.donate_offline": {"zh": "支持服务未启动，可直接在「支持」页扫码赞赏", "en": "Support service not running; you can scan the QR code on the Support tab to donate"},
+	"toast.donate_opened": {"zh": "已在浏览器打开赞赏页", "en": "Donate page opened in browser"},
+	"toast.email_app_missing": {"zh": "未找到邮件应用；内容已复制，可粘贴到网页邮箱", "en": "No mail app found; content copied — paste it into a webmail"},
+	"toast.email_app_missing_alt": {"zh": "未找到邮件应用，邮件内容已复制到剪贴板", "en": "No mail app found; email content copied to clipboard"},
+	"toast.email_app_opened": {"zh": "已打开邮件应用：%s", "en": "Mail app opened: %s"},
+	"toast.email_copied": {"zh": "已复制邮件内容", "en": "Email content copied"},
+	"toast.email_copied_paste": {"zh": "邮件内容已复制，可粘贴到任意邮箱", "en": "Email content copied; paste it into any mail client"},
+	"toast.email_no_recipient": {"zh": "收件人邮箱为空，无法打开邮件应用", "en": "Recipient email is empty; can't open the mail app"},
+	"toast.export_dir_opened": {"zh": "已在文件管理器打开导出目录", "en": "Export folder opened in file manager"},
+	"toast.free_https_off": {"zh": "免费版无法使用 HTTPS，已自动改用 HTTP；升级 Pro 后可启用", "en": "HTTPS is not available on the Free plan; HTTP is used instead. Upgrade to Pro to enable it."},
+	"toast.friend_qr_loading": {"zh": "好友二维码尚未加载，请稍后重试", "en": "Friend QR code not loaded yet, please try again shortly"},
+	"toast.game_opened": {"zh": "已在浏览器打开游戏地址", "en": "Game address opened in browser"},
+	"toast.game_url_copied": {"zh": "已复制游戏地址", "en": "Game address copied"},
+	"toast.github_opened": {"zh": "已在浏览器打开 GitHub 仓库：", "en": "GitHub repo opened in browser:"},
+	"toast.https_needs_pro": {"zh": "HTTPS / 根证书需要 Pro 授权，已切换到「支持」页", "en": "HTTPS / root CA requires a Pro license; switched to the Support tab"},
+	"toast.install_addr_copied": {"zh": "已复制安装页地址", "en": "Install page address copied"},
+	"toast.install_addr_copied_detail": {"zh": "已复制安装页地址: ", "en": "Install page address copied: "},
+	"toast.install_page_opened": {"zh": "已在浏览器打开安装页", "en": "Install page opened in browser"},
+	"toast.issues_opened": {"zh": "已在浏览器打开问题反馈：", "en": "Issue reporter opened in browser:"},
+	"toast.license_removed": {"zh": "已移除本机授权，回到免费版", "en": "License removed; back to the Free plan"},
+	"toast.license_removed_short": {"zh": "已移除本机授权", "en": "License removed"},
+	"toast.logs_cleared": {"zh": "日志已清空", "en": "Logs cleared"},
+	"toast.logs_copied": {"zh": "已复制 %d 条日志", "en": "Copied %d log entries"},
+	"toast.machine_copied": {"zh": "已复制机器码", "en": "Machine code copied"},
+	"toast.machine_copied_buy": {"zh": "已复制机器码，购买后发给我们即可换取授权码", "en": "Machine code copied; send it to us after purchase to get your license code"},
+	"toast.no_pages": {"zh": "没有已连接的页面", "en": "No connected pages"},
+	"toast.paste_code_first": {"zh": "请先粘贴授权码", "en": "Please paste a license code first"},
+	"toast.qr_page_opened": {"zh": "已在浏览器打开二维码页面", "en": "QR page opened in browser"},
+	"toast.refresh_pushed": {"zh": "已推送刷新到 %d 个页面", "en": "Refresh pushed to %d page(s)"},
+	"toast.remote_10m": {"zh": "⏰ 远程试玩还剩 10 分钟", "en": "⏰ 10 minutes left in Remote Play"},
+	"toast.remote_1m": {"zh": "⏰ 远程试玩还剩 1 分钟", "en": "⏰ 1 minute left in Remote Play"},
+	"toast.remote_5m": {"zh": "⏰ 远程试玩还剩 5 分钟", "en": "⏰ 5 minutes left in Remote Play"},
+	"toast.remote_copied": {"zh": "已复制远程试玩地址", "en": "Remote Play address copied"},
+	"toast.remote_copied_share": {"zh": "已复制远程试玩地址，可直接粘贴分享", "en": "Remote Play address copied; paste to share"},
+	"toast.remote_copied_share_alt": {"zh": "远程试玩地址已复制到剪贴板，可直接粘贴分享", "en": "Remote Play address copied to clipboard; paste to share"},
+	"toast.remote_ending": {"zh": "⏰ 远程试玩即将结束", "en": "⏰ Remote Play ending soon"},
+	"toast.remote_opened": {"zh": "已在浏览器打开远程试玩地址", "en": "Remote Play address opened in browser"},
+	"toast.remote_start_failed": {"zh": "启动远程试玩失败：", "en": "Failed to start Remote Play:"},
+	"toast.remote_stopping": {"zh": "正在停止远程试玩…", "en": "Stopping Remote Play…"},
+	"toast.restart_for_pro": {"zh": "重启 GDLive 服务器后 HTTPS / 页面调试面板生效", "en": "Restart the GDLive server for HTTPS / the in-page debug console to take effect"},
+	"toast.rotate_failed": {"zh": "重新生成失败：", "en": "Regeneration failed:"},
+	"toast.shot_no_pages_hint": {"zh": "没有已连接的页面，截图请求未送达（先在浏览器/手机打开游戏）", "en": "No connected pages; the screenshot request reached no one (open the game in a browser or phone first)"},
+	"toast.shot_no_server": {"zh": "服务器未运行，无法请求截图", "en": "Server not running; can't request screenshots"},
+	"toast.shot_saved": {"zh": "截图已保存（%d×%d）", "en": "Screenshot saved (%d×%d)"},
+	"toast.start_first": {"zh": "先启动服务器", "en": "Start the server first"},
+	"toast.start_first_install": {"zh": "先启动服务器，再打开安装页", "en": "Start the server before opening the install page"},
+	"toast.start_first_qr": {"zh": "先启动服务器，再打开二维码页面", "en": "Start the server before opening the QR page"},
+	"toast.support_addr_copied": {"zh": "已复制支持服务地址", "en": "Support service address copied"},
+	"toast.support_not_running": {"zh": "支持服务未启动，请重启插件或在「支持」页直接粘贴授权码", "en": "Support service not running; restart the plugin or paste the license code directly on the Support tab"},
+	"toast.support_page_copied": {"zh": "已复制支持页地址", "en": "Support page address copied"},
+	"toast.support_page_opened": {"zh": "已在浏览器打开支持页", "en": "Support page opened in browser"},
+	"toast.url_copied": {"zh": "已复制 %s/", "en": "Copied %s/"},
+	"toast.website_opened": {"zh": "已在浏览器打开官网：", "en": "Website opened in browser:"},
+	"toast.wechat_copied": {"zh": "已复制微信号", "en": "WeChat ID copied"},
+	"toast.wechat_copied_detail": {"zh": "已复制微信号：%s", "en": "WeChat ID copied: %s"},
+	"tooltip.export_limit_hit": {"zh": "免费版今日导出次数已用完，升级 Pro 可无限导出", "en": "Free daily exports used up; upgrade to Pro for unlimited exports"},
+	"tooltip.exports_left": {"zh": "免费版今日剩余 %d 次导出", "en": "%d export(s) left today on the Free plan"},
+	"tooltip.exports_unlimited": {"zh": "Pro：导出次数不限", "en": "Pro: unlimited exports"},
 }
