@@ -15,6 +15,10 @@ const LEGACY_DEFAULT_PORT := 8060
 # extension is missing). Keep in sync with `license::PRO_*` in Rust.
 const FALLBACK_EMAIL := "chping@iowk.com"
 const FALLBACK_WECHAT := "thingbox"
+const WEBSITE_URL := "https://gdlive.iowk.com/"
+const GITHUB_REPO := "cfping/Godot-Live"
+const GITHUB_URL := "https://github.com/cfping/Godot-Live"
+const GITHUB_ISSUES_URL := "https://github.com/cfping/Godot-Live/issues/new"
 
 const LEVEL_COLORS := {
 	"error": "#ef6161",
@@ -34,6 +38,14 @@ const BRAND_BLUE_DARK := Color(0.216, 0.427, 0.604)
 const BRAND_GREEN := Color(0.216, 0.816, 0.627) # #37d0a0
 const BRAND_GOLD := Color(0.941, 0.714, 0.298) # #f0b64c
 const BRAND_VIOLET := Color(0.718, 0.616, 0.961) # #b79df5
+
+# The embedded payment images are 600x900 posters (branding around the code).
+# Crop the white QR card before displaying so the code itself stays large and
+# crisp in the narrow editor dock. Values are fractions of the source image.
+const DONATE_QR_CROPS := {
+	"alipay": Rect2(0.220, 0.260, 0.555, 0.425),
+	"wechat": Rect2(0.195, 0.190, 0.605, 0.477),
+}
 
 # Editor-derived palette: sampled from the live editor theme by
 # `_init_palette()` so the panel follows the host editor (dark, light or a
@@ -91,6 +103,7 @@ var _auto_reload: CheckBox
 var _watch: CheckBox
 var _tls: CheckBox
 var _auto_start: CheckBox
+var _debug_overlay: CheckBox
 var _start_button: Button
 var _export_button: Button
 var _url_list: ItemList
@@ -157,7 +170,7 @@ var _buy_qr_alipay: TextureRect
 var _license_status_label: Label
 var _license_quota_label: Label
 var _license_machine_label: Label
-var _license_input: LineEdit
+var _license_input: TextEdit
 var _contact_email_label: Label
 var _contact_wechat_label: Label
 var _contact_email := FALLBACK_EMAIL
@@ -179,10 +192,8 @@ var _license_pro := false
 var _license_tier := "free"
 var _license_last_check_ms := 0
 var _support_base := ""
-var _support_label: Label
 var _support_open_button: Button
 var _support_copy_button: Button
-var _support_restart_button: Button
 
 var _remote_status_label: Label
 var _remote_url_link: LinkButton
@@ -327,7 +338,7 @@ func _build_ui() -> void:
 	var mail_quick := Button.new()
 	mail_quick.text = "✉"
 	mail_quick.flat = true
-	mail_quick.tooltip_text = "邮件联系作者（购买 / 续费 / 发票 / 换机）"
+	mail_quick.tooltip_text = "邮件联系我们（购买 / 续费 / 发票 / 换机）"
 	mail_quick.custom_minimum_size = Vector2(24, 0)
 	mail_quick.pressed.connect(_open_email_dialog)
 	header.add_child(mail_quick)
@@ -497,7 +508,9 @@ func _build_ui() -> void:
 	_tls.tooltip_text = "自签根 CA + TLS；线程版 Web 构建需要（SharedArrayBuffer）"
 	_auto_start = _check("自动启动", true)
 	_auto_start.tooltip_text = "打开编辑器时自动启动服务器"
-	for box in [_auto_export, _auto_reload, _watch, _tls, _auto_start]:
+	_debug_overlay = _check("远程调试面板", true)
+	_debug_overlay.tooltip_text = "在页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令）；关闭后页面不再被注入，已打开的页面刷新后生效"
+	for box in [_auto_export, _auto_reload, _watch, _tls, _auto_start, _debug_overlay]:
 		_settings_box.add_child(box)
 		box.toggled.connect(func(_pressed): _on_option_changed())
 
@@ -860,48 +873,141 @@ func _build_ui() -> void:
 	# ===================== tab: 支持 / 授权 ===============================
 	var support := _make_tab("支持")
 
-	support.add_child(_section("支持服务 · 独立端口"))
-	_support_label = Label.new()
-	_support_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-	_support_label.add_theme_font_size_override("font_size", 10)
-	_support_label.add_theme_color_override("font_color", _ed_dim)
-	support.add_child(_support_label)
+	# --- 授权状态 -------------------------------------------------------
+	var status_card := _card(support, _ed_dark1, Color(_ed_accent, 0.30), 3, 11)
+	status_card.add_child(_section("授权状态"))
+	_license_status_label = Label.new()
+	_license_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_license_status_label.add_theme_font_size_override("font_size", 14)
+	status_card.add_child(_license_status_label)
 
+	_license_quota_label = Label.new()
+	_license_quota_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_license_quota_label.add_theme_font_size_override("font_size", 11)
+	_license_quota_label.add_theme_color_override("font_color", Color(0.62, 0.66, 0.72))
+	status_card.add_child(_license_quota_label)
+
+	var machine_row := HBoxContainer.new()
+	machine_row.add_theme_constant_override("separation", 6)
+	status_card.add_child(machine_row)
+	_license_machine_label = Label.new()
+	_license_machine_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	_license_machine_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_license_machine_label.add_theme_font_size_override("font_size", 10)
+	_license_machine_label.add_theme_color_override("font_color", _ed_dim)
+	if _ed_mono != null:
+		_license_machine_label.add_theme_font_override("font", _ed_mono)
+	machine_row.add_child(_license_machine_label)
+	var copy_machine := _button("复制机器码", _on_copy_machine)
+	copy_machine.tooltip_text = "复制本机机器码，购买 / 换机时发给我们"
+	copy_machine.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	machine_row.add_child(copy_machine)
+
+	var license_row := HBoxContainer.new()
+	status_card.add_child(license_row)
+	_buy_button = _button("购买 / 升级 Pro", _on_open_pro_page)
+	_buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_gold(_buy_button)
+	license_row.add_child(_buy_button)
+	_remove_license_button = _button("移除本机授权", _on_remove_license)
+	_remove_license_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	license_row.add_child(_remove_license_button)
+
+	# --- 激活授权码 -----------------------------------------------------
+	var activate_card := _card(support)
+	activate_card.add_child(_section("激活授权码"))
+	# License codes are long single-line tokens; a multi-line field makes the
+	# whole code visible and lets users paste it from an email or chat without
+	# horizontal scrolling. Whitespace is stripped before activation.
+	_license_input = TextEdit.new()
+	_license_input.placeholder_text = "粘贴授权码 GTL1....（可整段粘贴，自动忽略空格和换行）"
+	_license_input.custom_minimum_size = Vector2(0, 64)
+	_license_input.scroll_fit_content_height = true
+	_license_input.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	_license_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	activate_card.add_child(_license_input)
+	_license_input.add_theme_font_size_override("font_size", 11)
+	_license_input.add_theme_stylebox_override("normal", _card_style(_ed_dark3, _ed_dark2, 2, 10))
+	var license_focus := _card_style(_ed_dark3, Color(_ed_accent, 0.60), 2, 10)
+	_license_input.add_theme_stylebox_override("focus", license_focus)
+
+	# Ctrl/Cmd+Enter activates without reaching for the button.
+	_license_input.gui_input.connect(_on_license_input_gui_input)
+
+	var license_buttons := HBoxContainer.new()
+	activate_card.add_child(license_buttons)
+	_license_activate_button = _button("激活", _on_activate_license)
+	_license_activate_button.tooltip_text = "激活授权（Ctrl/Cmd+Enter）"
+	_license_activate_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_primary(_license_activate_button)
+	license_buttons.add_child(_license_activate_button)
+	var paste_button := _button("粘贴", func():
+		var text := DisplayServer.clipboard_get().strip_edges()
+		if text == "":
+			_append_log("warn", "剪贴板为空")
+			return
+		_license_input.text = text
+	)
+	paste_button.tooltip_text = "从剪贴板粘贴授权码"
+	license_buttons.add_child(paste_button)
+
+	activate_card.add_child(
+		_hint("授权码与机器码绑定；换机请联系我们重新签发。激活后重启 GDLive 服务器生效。")
+	)
+
+	# 支持服务在后台运行，面板只保留两个入口按钮，不展示地址 / 端口。
 	var support_row := HBoxContainer.new()
+	support_row.add_theme_constant_override("separation", 6)
 	support.add_child(support_row)
 	_support_open_button = _button("打开授权页", _on_open_support)
 	_support_open_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_support_open_button.tooltip_text = "打开授权 / 购买网页"
+	_style_primary(_support_open_button)
 	support_row.add_child(_support_open_button)
 	_support_copy_button = _button("复制地址", _on_copy_support)
 	_support_copy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_support_copy_button.tooltip_text = "复制授权 / 购买页地址"
 	support_row.add_child(_support_copy_button)
-	_support_restart_button = _button("重启", _on_restart_support)
-	_support_restart_button.tooltip_text = "关闭旧的 Godot 实例后重试 31065"
-	support_row.add_child(_support_restart_button)
 
-	support.add_child(HSeparator.new())
-	support.add_child(_section("联系作者 · 购买 / 续费 / 发票 / 换机"))
-
-	var contact_card := PanelContainer.new()
-	contact_card.add_theme_stylebox_override(
-		"panel",
-		_card_style(_ed_dark1, Color(_ed_accent, 0.30), 2, 10)
-	)
-	support.add_child(contact_card)
-
-	var contact_box := VBoxContainer.new()
-	contact_box.add_theme_constant_override("separation", 6)
-	contact_card.add_child(contact_box)
+	# --- 联系我们 -------------------------------------------------------
+	var contact_card := _card(support, _ed_dark1, Color(_ed_accent, 0.30), 3, 11)
 
 	var contact_head := Label.new()
-	contact_head.text = "邮件优先 · 通常 1 个工作日内回复"
+	contact_head.text = "联系我们 · 购买 / 续费 / 发票 / 换机"
+	contact_head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	contact_head.add_theme_font_size_override("font_size", 11)
 	contact_head.add_theme_color_override("font_color", _ed_accent)
-	contact_box.add_child(contact_head)
+	contact_card.add_child(contact_head)
+
+	var site_row := HBoxContainer.new()
+	site_row.add_theme_constant_override("separation", 6)
+	contact_card.add_child(site_row)
+	var site_label := Label.new()
+	site_label.text = "官网：" + WEBSITE_URL.trim_prefix("https://").trim_suffix("/")
+	site_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	site_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	site_label.add_theme_font_size_override("font_size", 12)
+	site_row.add_child(site_label)
+	var open_site := _button("打开官网", _open_website)
+	open_site.tooltip_text = "在浏览器打开 GDLive 官网（文档 / 下载 / 更新日志）"
+	site_row.add_child(open_site)
+
+	var github_row := HBoxContainer.new()
+	github_row.add_theme_constant_override("separation", 6)
+	contact_card.add_child(github_row)
+	var open_repo := _button("GitHub 仓库", _open_github)
+	open_repo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	open_repo.tooltip_text = "打开 GitHub 仓库（%s）\n%s" % [GITHUB_REPO, GITHUB_URL]
+	github_row.add_child(open_repo)
+	var report_issue := _button("问题反馈", _open_github_issues)
+	report_issue.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	report_issue.tooltip_text = "在 GitHub Issues 反馈 Bug / 功能建议：" + GITHUB_ISSUES_URL
+	_style_primary(report_issue)
+	github_row.add_child(report_issue)
 
 	var email_row := HBoxContainer.new()
 	email_row.add_theme_constant_override("separation", 6)
-	contact_box.add_child(email_row)
+	contact_card.add_child(email_row)
 	_contact_email_label = Label.new()
 	_contact_email_label.text = "邮箱：" + _contact_email
 	_contact_email_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -909,7 +1015,7 @@ func _build_ui() -> void:
 	_contact_email_label.add_theme_font_size_override("font_size", 12)
 	email_row.add_child(_contact_email_label)
 	var copy_email := _button("复制邮箱", _on_copy_contact_email)
-	copy_email.tooltip_text = "复制作者邮箱"
+	copy_email.tooltip_text = "复制联系邮箱"
 	email_row.add_child(copy_email)
 	var mail_button := _button("✉ 写邮件", _open_email_dialog)
 	mail_button.tooltip_text = "自动生成含机器码与版本的邮件"
@@ -918,14 +1024,14 @@ func _build_ui() -> void:
 
 	var wechat_row := HBoxContainer.new()
 	wechat_row.add_theme_constant_override("separation", 6)
-	contact_box.add_child(wechat_row)
+	contact_card.add_child(wechat_row)
 	_contact_wechat_label = Label.new()
 	_contact_wechat_label.text = "微信：" + _contact_wechat
 	_contact_wechat_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_contact_wechat_label.add_theme_font_size_override("font_size", 12)
 	wechat_row.add_child(_contact_wechat_label)
 	var copy_wechat := _button("复制微信", _on_copy_contact_wechat)
-	copy_wechat.tooltip_text = "复制作者微信号"
+	copy_wechat.tooltip_text = "复制微信号"
 	wechat_row.add_child(copy_wechat)
 	var wechat_qr_toggle := _button("好友二维码", func():
 		if _friend_qr.texture == null:
@@ -933,110 +1039,72 @@ func _build_ui() -> void:
 			return
 		_friend_qr_panel.visible = not _friend_qr_panel.visible
 	)
-	wechat_qr_toggle.tooltip_text = "展开 / 收起作者微信好友二维码，扫码即可添加"
+	wechat_qr_toggle.tooltip_text = "展开 / 收起微信好友二维码，扫码即可添加"
 	wechat_row.add_child(wechat_qr_toggle)
 
 	_friend_qr_panel = PanelContainer.new()
 	_friend_qr_panel.add_theme_stylebox_override("panel", _qr_card_style())
 	_friend_qr_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_friend_qr_panel.visible = false
-	contact_box.add_child(_friend_qr_panel)
+	contact_card.add_child(_friend_qr_panel)
 	_friend_qr = TextureRect.new()
 	_friend_qr.custom_minimum_size = Vector2(180, 180)
 	_friend_qr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_friend_qr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_friend_qr_panel.add_child(_friend_qr)
 
-	var contact_hint := Label.new()
-	contact_hint.text = "邮件会自动带上机器码与版本；付款后附上支付截图即可。"
-	contact_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	contact_hint.add_theme_font_size_override("font_size", 10)
-	contact_hint.add_theme_color_override("font_color", _ed_dim)
-	contact_box.add_child(contact_hint)
+	contact_card.add_child(
+		_hint(
+			"购买 / 续费 / 发票 / 换机请邮件或微信（通常 1 个工作日内回复）；"
+			+ "Bug 与功能建议请走 GitHub Issues。付款后附上支付截图即可。"
+		)
+	)
 
-	support.add_child(_section("授权状态"))
-
-	_license_status_label = Label.new()
-	_license_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_license_status_label.add_theme_font_size_override("font_size", 13)
-	support.add_child(_license_status_label)
-
-	_license_quota_label = Label.new()
-	_license_quota_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_license_quota_label.add_theme_font_size_override("font_size", 11)
-	_license_quota_label.add_theme_color_override("font_color", Color(0.62, 0.66, 0.72))
-	support.add_child(_license_quota_label)
-
-	_license_machine_label = Label.new()
-	_license_machine_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-	_license_machine_label.add_theme_font_size_override("font_size", 10)
-	_license_machine_label.add_theme_color_override("font_color", _ed_dim)
-	support.add_child(_license_machine_label)
-
-	var license_row := HBoxContainer.new()
-	support.add_child(license_row)
-	var copy_machine := _button("复制机器码", _on_copy_machine)
-	copy_machine.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	license_row.add_child(copy_machine)
-	_buy_button = _button("购买 / 升级 Pro", _on_open_pro_page)
-	_buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_gold(_buy_button)
-	license_row.add_child(_buy_button)
-
-	var license_input_row := HBoxContainer.new()
-	support.add_child(license_input_row)
-	_license_input = LineEdit.new()
-	_license_input.placeholder_text = "粘贴授权码 GTL1...."
-	_license_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	license_input_row.add_child(_license_input)
-	_license_input.add_theme_stylebox_override("normal", _card_style(_ed_dark3, _ed_dark2, 2, 10))
-	var license_focus := _card_style(_ed_dark3, Color(_ed_accent, 0.60), 2, 10)
-	_license_input.add_theme_stylebox_override("focus", license_focus)
-	_license_activate_button = _button("激活", _on_activate_license)
-	license_input_row.add_child(_license_activate_button)
-
-	_remove_license_button = _button("移除本机授权", _on_remove_license)
-	_remove_license_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	support.add_child(_remove_license_button)
-
-
-	support.add_child(HSeparator.new())
-	support.add_child(_section("赞赏支持"))
+	# --- 赞赏支持 -------------------------------------------------------
+	var donate_card := _card(support)
+	donate_card.add_child(_section("赞赏支持"))
 
 	var donate_intro := Label.new()
-	donate_intro.text = "如果 GDLive 帮到了你，也欢迎请作者喝杯咖啡 ☕\n赞赏完全自愿，不影响授权与功能。"
+	donate_intro.text = "如果 GDLive 帮到了你，欢迎赞助一杯咖啡 ☕\n赞赏完全自愿，不影响授权与功能。"
 	donate_intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	donate_intro.add_theme_font_size_override("font_size", 11)
 	donate_intro.add_theme_color_override("font_color", Color(0.62, 0.66, 0.72))
-	support.add_child(donate_intro)
+	donate_card.add_child(donate_intro)
 
+	# Stack the codes vertically at full width. The embedded posters are
+	# cropped to their QR card in `_set_donate_texture`, so this stays sharp
+	# instead of squeezing a 600x900 image into one narrow column.
 	var wechat_title := Label.new()
 	wechat_title.text = "微信赞赏"
 	wechat_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	wechat_title.add_theme_color_override("font_color", Color(0.25, 0.73, 0.31))
-	support.add_child(wechat_title)
-
+	donate_card.add_child(wechat_title)
+	var wechat_qr_card := PanelContainer.new()
+	wechat_qr_card.add_theme_stylebox_override("panel", _qr_card_style())
+	donate_card.add_child(wechat_qr_card)
 	_donate_qr_wechat = TextureRect.new()
-	_donate_qr_wechat.custom_minimum_size = Vector2(0, 300)
+	_donate_qr_wechat.custom_minimum_size = Vector2(0, 250)
 	_donate_qr_wechat.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_donate_qr_wechat.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	support.add_child(_donate_qr_wechat)
+	wechat_qr_card.add_child(_donate_qr_wechat)
 
 	var alipay_title := Label.new()
 	alipay_title.text = "支付宝赞赏"
 	alipay_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	alipay_title.add_theme_color_override("font_color", Color(0.35, 0.65, 1.0))
-	support.add_child(alipay_title)
-
+	donate_card.add_child(alipay_title)
+	var alipay_qr_card := PanelContainer.new()
+	alipay_qr_card.add_theme_stylebox_override("panel", _qr_card_style())
+	donate_card.add_child(alipay_qr_card)
 	_donate_qr_alipay = TextureRect.new()
-	_donate_qr_alipay.custom_minimum_size = Vector2(0, 300)
+	_donate_qr_alipay.custom_minimum_size = Vector2(0, 250)
 	_donate_qr_alipay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_donate_qr_alipay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	support.add_child(_donate_qr_alipay)
+	alipay_qr_card.add_child(_donate_qr_alipay)
 
 	var donate_open := _button("在浏览器打开赞赏页", _on_open_donate)
 	donate_open.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	support.add_child(donate_open)
+	donate_card.add_child(donate_open)
 
 	# ===================== tab order =====================================
 	# Blocks above are kept in their historical build order; shuffle the
@@ -1078,6 +1146,7 @@ func _build_ui() -> void:
 	_onboard.title = "欢迎使用 GDLive"
 	_onboard.ok_button_text = "开始使用"
 	_onboard.add_cancel_button("关闭")
+	_onboard.add_button("🌐 打开官网", true, "site")
 	_onboard.add_button("安装根证书并启用 HTTPS", true, "cert")
 	_onboard.confirmed.connect(_mark_onboarded)
 	_onboard.canceled.connect(_mark_onboarded)
@@ -1114,29 +1183,23 @@ func _build_ui() -> void:
 	buy_copy_row.add_child(buy_copy)
 
 	buy_box.add_child(_section("② 微信 / 支付宝扫码付款"))
-	var buy_qr_row := HBoxContainer.new()
-	buy_qr_row.add_theme_constant_override("separation", 10)
-	buy_box.add_child(buy_qr_row)
-	var buy_wx_box := VBoxContainer.new()
-	buy_wx_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	buy_qr_row.add_child(buy_wx_box)
+	var buy_qr_box := VBoxContainer.new()
+	buy_qr_box.add_theme_constant_override("separation", 8)
+	buy_box.add_child(buy_qr_box)
 	var buy_wx_title := Label.new()
 	buy_wx_title.text = "微信支付"
 	buy_wx_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	buy_wx_title.add_theme_color_override("font_color", Color(0.25, 0.73, 0.31))
-	buy_wx_box.add_child(buy_wx_title)
-	_buy_qr_wechat = _buy_qr(150)
-	buy_wx_box.add_child(_buy_qr_wechat)
-	var buy_ali_box := VBoxContainer.new()
-	buy_ali_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	buy_qr_row.add_child(buy_ali_box)
+	buy_qr_box.add_child(buy_wx_title)
+	_buy_qr_wechat = _buy_qr(220)
+	buy_qr_box.add_child(_buy_qr_wechat)
 	var buy_ali_title := Label.new()
 	buy_ali_title.text = "支付宝"
 	buy_ali_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	buy_ali_title.add_theme_color_override("font_color", Color(0.35, 0.65, 1.0))
-	buy_ali_box.add_child(buy_ali_title)
-	_buy_qr_alipay = _buy_qr(150)
-	buy_ali_box.add_child(_buy_qr_alipay)
+	buy_qr_box.add_child(buy_ali_title)
+	_buy_qr_alipay = _buy_qr(220)
+	buy_qr_box.add_child(_buy_qr_alipay)
 
 	_buy_step3_label = Label.new()
 	_buy_step3_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1147,7 +1210,7 @@ func _build_ui() -> void:
 	var buy_contact_row := HBoxContainer.new()
 	buy_contact_row.add_theme_constant_override("separation", 6)
 	buy_box.add_child(buy_contact_row)
-	var buy_mail := _button("✉ 邮件联系作者", _open_email_dialog)
+	var buy_mail := _button("✉ 邮件联系我们", _open_email_dialog)
 	buy_mail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_mail.tooltip_text = "自动生成含机器码的邮件"
 	_style_gold(buy_mail)
@@ -1165,7 +1228,7 @@ func _build_ui() -> void:
 	# Pre-filled template so users never have to assemble the machine code,
 	# version and payment details by hand.
 	_email_dialog = AcceptDialog.new()
-	_email_dialog.title = "邮件联系作者"
+	_email_dialog.title = "邮件联系我们"
 	_email_dialog.ok_button_text = "打开邮件应用"
 	_email_dialog.add_cancel_button("关闭")
 	_email_dialog.add_button("复制邮件内容", true, "copy")
@@ -1228,15 +1291,29 @@ func _build_ui() -> void:
 	add_child(footer_row)
 
 	var footer := Label.new()
-	footer.text = "COOP/COEP 已开启 · 手机扫码即可调试"
+	footer.text = "手机扫码调试"
 	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	footer.tooltip_text = "COOP/COEP 已开启：手机连同一 Wi-Fi 扫码即可调试"
 	footer.add_theme_color_override("font_color", _ed_dim)
 	footer.add_theme_font_size_override("font_size", 10)
 	footer_row.add_child(footer)
 
-	var footer_contact := _button("✉ 联系作者", _open_email_dialog)
+	var footer_site := _button("🌐 官网", _open_website)
+	footer_site.flat = true
+	footer_site.tooltip_text = "打开 GDLive 官网（文档 / 下载 / 更新日志）\n" + WEBSITE_URL
+	footer_site.add_theme_font_size_override("font_size", 10)
+	footer_row.add_child(footer_site)
+
+	var footer_issues := _button("问题反馈", _open_github_issues)
+	footer_issues.flat = true
+	footer_issues.tooltip_text = "在 GitHub Issues 反馈 Bug / 功能建议\n" + GITHUB_ISSUES_URL
+	footer_issues.add_theme_font_size_override("font_size", 10)
+	footer_row.add_child(footer_issues)
+
+	var footer_contact := _button("✉ 联系我们", _open_email_dialog)
 	footer_contact.flat = true
-	footer_contact.tooltip_text = "邮件联系作者：购买 / 续费 / 发票 / 换机"
+	footer_contact.tooltip_text = "邮件联系我们：购买 / 续费 / 发票 / 换机"
 	footer_contact.add_theme_font_size_override("font_size", 10)
 	footer_row.add_child(footer_contact)
 
@@ -1292,6 +1369,35 @@ func _update_settings_summary() -> void:
 func _label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
+	return label
+
+
+## Bordered card with a themed inner VBox (spacing tuned for dense docks).
+## The returned VBox is already attached under a new PanelContainer in
+## `parent`, so callers only add their content to the returned box.
+func _card(
+	parent: Control,
+	fill: Variant = null,
+	border: Variant = null,
+	radius := 3,
+	margins := 10
+) -> VBoxContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _card_style(fill, border, radius, margins))
+	parent.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 7)
+	panel.add_child(box)
+	return box
+
+
+## Small dim explanatory line used under controls.
+func _hint(text: String, font_size := 10) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", _ed_dim)
 	return label
 
 
@@ -1458,6 +1564,8 @@ func _apply_config() -> void:
 		_watch.button_pressed,
 		400
 	)
+	if server.has_method("set_overlay"):
+		server.set_overlay(_debug_overlay.button_pressed)
 
 
 func _on_option_changed() -> void:
@@ -1855,12 +1963,17 @@ func _show_onboarding() -> void:
 		+ "1. 在「调试」页确认端口（当前 %d），点顶部「导出」\n"
 		+ "2. 需要线程版时，点下方按钮启用 HTTPS 并安装一次根证书\n"
 		+ "3. 手机扫码打开游戏；改代码会自动重新导出并刷新\n\n"
+		+ "官网：%s（文档 / 下载 / 更新日志）\n"
+		+ "问题反馈：%s（GitHub Issues）\n"
 		+ "随时点右上角「?」重新打开本引导。"
-	) % int(_port.value)
+	) % [int(_port.value), WEBSITE_URL, GITHUB_ISSUES_URL]
 	_onboard.popup_centered(Vector2i(620, 440))
 
 
 func _on_onboard_action(action: StringName) -> void:
+	if action == &"site":
+		_open_website()
+		return
 	if action == &"cert":
 		_onboard.hide()
 		_mark_onboarded()
@@ -1931,24 +2044,18 @@ func _apply_support_result(result: Dictionary) -> void:
 	if _support_base != "" and not _support_base.ends_with(":31065"):
 		_append_log(
 			"warn",
-			"支持服务 31065 被占用（可能是旧的 Godot 实例），当前使用 %s；关闭旧实例后点「重启」可恢复 31065"
+			"支持服务 31065 被占用（可能是旧的 Godot 实例），当前使用 %s；关闭旧实例后重新加载插件即可恢复 31065"
 			% _support_base
 		)
 	_refresh_support_ui()
 
 
 func _refresh_support_ui() -> void:
-	if _support_label == null:
-		return
 	var ready := _support_base != ""
-	_support_label.text = (
-		_support_base + "/pro"
-		if ready
-		else "支持服务未启动（授权激活仍可在本页直接使用）"
-	)
-	_support_label.tooltip_text = "独立于游戏服务器；/pro 与 / 是同一个授权 / 购买页"
-	_support_open_button.disabled = not ready
-	_support_copy_button.disabled = not ready
+	if _support_open_button != null:
+		_support_open_button.disabled = not ready
+	if _support_copy_button != null:
+		_support_copy_button.disabled = not ready
 
 
 func _on_open_support() -> void:
@@ -1956,12 +2063,6 @@ func _on_open_support() -> void:
 		_append_log("warn", "支持服务未启动")
 		return
 	OS.shell_open(_support_base + "/__gdlive/")
-
-
-func _on_restart_support() -> void:
-	if server == null:
-		return
-	_apply_support_result(server.restart_support())
 
 
 func _on_copy_support() -> void:
@@ -2041,9 +2142,9 @@ func _refresh_remote() -> void:
 			_remote_status_label.text = "○ 已停止"
 			_remote_status_label.add_theme_color_override("font_color", _ed_dim)
 		_:
-			var relay_line := "\n中继：" + str(server.default_relay())
+			# 内置中继不回显地址，避免泄露基础设施信息
 			_remote_status_label.text = (
-				("○ 未启动" if paid else "○ 未启动 · 免费/试用单次 15 分钟") + relay_line
+				"○ 未启动" if paid else "○ 未启动 · 免费/试用单次 15 分钟"
 			)
 			_remote_status_label.add_theme_color_override("font_color", _ed_dim)
 
@@ -2260,14 +2361,14 @@ func _refresh_license() -> void:
 		_contact_email_label.text = "邮箱：" + _contact_email
 	if _contact_wechat_label != null:
 		_contact_wechat_label.text = "微信：" + _contact_wechat
-	_license_machine_label.tooltip_text = "机器码由本机硬件标识本地生成，仅用于授权绑定，不会上传；购买后发给作者换取授权码"
+	_license_machine_label.tooltip_text = "机器码由本机硬件标识本地生成，仅用于授权绑定，不会上传；购买后发给我们换取授权码"
 	_buy_button.text = "续费 / 更换授权" if pro else "购买 / 升级 Pro"
 	_remove_license_button.disabled = not pro
 	if _buy_dialog != null:
 		_buy_price_label.text = str(st.get("price", ""))
 		_buy_machine_label.text = str(st.get("machine_id", ""))
 		_buy_step3_label.text = (
-			"③ 付款后把「机器码 + 支付截图」发给作者（微信 %s，或点下方「✉ 邮件联系作者」），\n收到授权码后在「支持」页下方粘贴激活。"
+			"③ 付款后把「机器码 + 支付截图」发给我们（微信 %s，或点下方「✉ 邮件联系我们」），\n收到授权码后在「支持」页下方粘贴激活。"
 			% _contact_wechat
 		)
 
@@ -2278,6 +2379,7 @@ func _refresh_license() -> void:
 	_set_pro_check(_auto_export, "自动导出", pro, "监听项目文件，变更后自动导出")
 	_set_pro_check(_auto_reload, "自动刷新", pro, "导出后通知页面刷新")
 	_set_pro_check(_tls, "HTTPS（线程版）", pro, "本机根证书 + TLS")
+	_set_pro_check(_debug_overlay, "远程调试面板", pro, "页面注入调试台（console 回传 / 网络抓包 / 截图 / 远程指令），可随时关闭")
 	if _ca_pro_hint != null:
 		_ca_pro_hint.visible = not pro
 	if _log_pro_hint != null:
@@ -2305,7 +2407,7 @@ func _on_copy_machine() -> void:
 		return
 	var st: Dictionary = server.license_status()
 	DisplayServer.clipboard_set(str(st.get("machine_id", "")))
-	_append_log("info", "已复制机器码，购买后发给作者即可换取授权码")
+	_append_log("info", "已复制机器码，购买后发给我们即可换取授权码")
 
 
 func _contact_info() -> Dictionary:
@@ -2351,7 +2453,7 @@ func _mail_template() -> Dictionary:
 	if version == "":
 		version = "未知"
 	var body := (
-		"作者你好，\n\n"
+		"你好，\n\n"
 		+ "我想咨询 GDLive Pro 授权（购买 / 续费 / 发票 / 换机 / Studio 团队版）。\n\n"
 		+ "- 机器码：%s\n" % machine
 		+ "- 当前版本：GDLive %s\n" % version
@@ -2430,17 +2532,32 @@ func _on_email_dialog_action(action: StringName) -> void:
 
 func _on_copy_email_recipient() -> void:
 	DisplayServer.clipboard_set(_email_to_input.text if _email_to_input != null else _contact_email)
-	_append_log("info", "已复制作者邮箱：%s" % _contact_email)
+	_append_log("info", "已复制联系邮箱：%s" % _contact_email)
 
 
 func _on_copy_contact_email() -> void:
 	DisplayServer.clipboard_set(_contact_email)
-	_append_log("info", "已复制作者邮箱：%s" % _contact_email)
+	_append_log("info", "已复制联系邮箱：%s" % _contact_email)
 
 
 func _on_copy_contact_wechat() -> void:
 	DisplayServer.clipboard_set(_contact_wechat)
-	_append_log("info", "已复制作者微信：%s" % _contact_wechat)
+	_append_log("info", "已复制微信号：%s" % _contact_wechat)
+
+
+func _open_website() -> void:
+	OS.shell_open(WEBSITE_URL)
+	_append_log("info", "已在浏览器打开官网：" + WEBSITE_URL)
+
+
+func _open_github() -> void:
+	OS.shell_open(GITHUB_URL)
+	_append_log("info", "已在浏览器打开 GitHub 仓库：" + GITHUB_URL)
+
+
+func _open_github_issues() -> void:
+	OS.shell_open(GITHUB_ISSUES_URL)
+	_append_log("info", "已在浏览器打开问题反馈：" + GITHUB_ISSUES_URL)
 
 
 func _on_open_pro_page() -> void:
@@ -2466,10 +2583,19 @@ func _on_open_pro_browser() -> void:
 	OS.shell_open(base + "/pro")
 
 
+func _on_license_input_gui_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode in [KEY_ENTER, KEY_KP_ENTER] and (event.ctrl_pressed or event.meta_pressed):
+			_license_input.accept_event()
+			_on_activate_license()
+
+
 func _on_activate_license() -> void:
 	if server == null or _license_input == null:
 		return
-	var key := _license_input.text.strip_edges()
+	# Accept codes pasted across multiple lines or with stray spaces.
+	var key := _license_input.text
+	key = key.replace("\r", "").replace("\n", "").replace("\t", "").replace(" ", "").strip_edges()
 	if key == "":
 		_append_log("warn", "请先粘贴授权码")
 		return
@@ -2776,6 +2902,21 @@ func _set_donate_texture(rect: TextureRect, kind: String) -> void:
 	if image.load_jpg_from_buffer(bytes) != OK:
 		_append_log("warn", "赞赏二维码解码失败: " + kind)
 		return
+	# Crop the branded poster down to its white QR card so the code can be
+	# rendered large enough to scan inside the narrow dock.
+	if DONATE_QR_CROPS.has(kind):
+		var crop: Rect2 = DONATE_QR_CROPS[kind]
+		var size := Vector2(image.get_width(), image.get_height())
+		var region := Rect2i(
+			int(crop.position.x * size.x),
+			int(crop.position.y * size.y),
+			int(crop.size.x * size.x),
+			int(crop.size.y * size.y)
+		)
+		var bounds := Rect2i(Vector2i.ZERO, image.get_size())
+		region = region.intersection(bounds)
+		if region.size.x > 0 and region.size.y > 0:
+			image = image.get_region(region)
 	rect.texture = ImageTexture.create_from_image(image)
 
 
@@ -2893,9 +3034,15 @@ func _append_log(level: String, text: String, source := "") -> void:
 	elif _log_matches(entry):
 		_render_log_entry(entry)
 
-	# Mirror important lines to Godot's Output panel too (and to headless logs).
-	if level == "warn" or level == "error" or level == "success":
-		print("[GDLive] ", text)
+	# Mirror to Godot's Output panel (and headless logs) so relayed browser
+	# console / network / export lines show up in the editor console too,
+	# not only inside the dock. "debug" (file-watch noise) stays panel-only.
+	if level != "debug":
+		var prefix := "[GDLive][%s]" % str(entry.level).to_upper()
+		if source != "":
+			print(prefix, " [", source, "] ", text)
+		else:
+			print(prefix, " ", text)
 
 
 func _log_matches(entry: Dictionary) -> bool:
@@ -2985,6 +3132,7 @@ func _load_settings() -> void:
 	_watch.button_pressed = bool(cfg.get_value("gtlive", "watch", true))
 	_tls.button_pressed = bool(cfg.get_value("gtlive", "tls", false))
 	_auto_start.button_pressed = bool(cfg.get_value("gtlive", "auto_start", true))
+	_debug_overlay.button_pressed = bool(cfg.get_value("gtlive", "debug_overlay", true))
 	_ca_prompt_check.button_pressed = bool(cfg.get_value("gtlive", "ca_prompt", true))
 	_onboarded = int(cfg.get_value("gtlive", "onboard_version", 0)) >= ONBOARD_VERSION
 	_tabs.current_tab = clampi(int(cfg.get_value("gtlive", "tab_index", 0)), 0, _tabs.get_tab_count() - 1)
@@ -3019,6 +3167,7 @@ func _save_settings() -> void:
 	cfg.set_value("gtlive", "watch", _watch.button_pressed)
 	cfg.set_value("gtlive", "tls", _tls.button_pressed)
 	cfg.set_value("gtlive", "auto_start", _auto_start.button_pressed)
+	cfg.set_value("gtlive", "debug_overlay", _debug_overlay.button_pressed)
 	cfg.set_value("gtlive", "ca_prompt", _ca_prompt_check.button_pressed)
 	cfg.set_value("gtlive", "onboard_version", ONBOARD_VERSION if _onboarded else 0)
 	cfg.set_value("gtlive", "settings_open", _settings_box.visible)
