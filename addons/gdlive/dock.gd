@@ -178,6 +178,10 @@ var _contact_wechat := FALLBACK_WECHAT
 var _friend_qr: TextureRect
 var _friend_qr_panel: PanelContainer
 var _email_dialog: AcceptDialog
+# True when the email dialog was opened on top of the buy dialog; the buy
+# dialog is hidden while the email one is up (exclusive windows) and popped
+# again when the email dialog closes.
+var _email_over_buy := false
 var _email_to_input: LineEdit
 var _email_subject_input: LineEdit
 var _email_body_edit: TextEdit
@@ -1237,12 +1241,16 @@ func _build_ui() -> void:
 	buy_wx_page.name = "微信支付"
 	buy_tabs.add_child(buy_wx_page)
 	_buy_qr_wechat = _buy_qr(220)
+	# CenterContainer sizes children to their minimum: without an explicit
+	# width the TextureRect collapses to (0, 220) and the QR never renders.
+	_buy_qr_wechat.custom_minimum_size = Vector2(220, 220)
 	buy_wx_page.add_child(_buy_qr_wechat)
 
 	var buy_ali_page := CenterContainer.new()
 	buy_ali_page.name = "支付宝"
 	buy_tabs.add_child(buy_ali_page)
 	_buy_qr_alipay = _buy_qr(220)
+	_buy_qr_alipay.custom_minimum_size = Vector2(220, 220)
 	buy_ali_page.add_child(_buy_qr_alipay)
 
 	_buy_step3_label = Label.new()
@@ -1280,6 +1288,7 @@ func _build_ui() -> void:
 	_email_dialog.min_size = Vector2i(460, 0)
 	_email_dialog.confirmed.connect(_send_email)
 	_email_dialog.custom_action.connect(_on_email_dialog_action)
+	_email_dialog.visibility_changed.connect(_on_email_dialog_visibility_changed)
 	add_child(_email_dialog)
 
 	var mail_box := VBoxContainer.new()
@@ -1574,6 +1583,21 @@ func _section(text: String) -> Label:
 	sb.content_margin_bottom = 3
 	label.add_theme_stylebox_override("normal", sb)
 	return label
+
+
+## Pop a dock dialog as the ONLY visible exclusive child of the editor window.
+## AcceptDialogs default to exclusive; opening a second one while another is
+## showing makes Godot refuse (window.cpp "already has another exclusive
+## child") and the new dialog renders at a stale size with dead space. Hide
+## the sibling dialogs first so only one is ever visible.
+func _popup_dialog(dialog: Window, minsize := Vector2i(0, 0)) -> void:
+	for other in [_confirm_rotate, _ca_prompt, _onboard, _buy_dialog, _email_dialog]:
+		if other != null and other != dialog:
+			other.hide()
+	if minsize == Vector2i(0, 0):
+		dialog.popup_centered()
+	else:
+		dialog.popup_centered(minsize)
 
 
 # ---------------------------------------------------------------------------
@@ -2023,7 +2047,7 @@ func _show_onboarding() -> void:
 		+ "问题反馈：%s（GitHub Issues）\n"
 		+ "随时点右上角「?」重新打开本引导。"
 	) % [int(_port.value), WEBSITE_URL, GITHUB_ISSUES_URL]
-	_onboard.popup_centered(Vector2i(620, 440))
+	_popup_dialog(_onboard, Vector2i(620, 320))
 
 
 func _on_onboard_action(action: StringName) -> void:
@@ -2540,6 +2564,9 @@ func _mail_template() -> Dictionary:
 
 
 func _open_email_dialog() -> void:
+	# Remember when this was opened from the buy dialog so it can be restored
+	# after the email dialog closes (both are exclusive dock windows).
+	_email_over_buy = _buy_dialog != null and _buy_dialog.visible
 	var mail := _mail_template()
 	if _email_to_input != null:
 		_email_to_input.text = str(mail.get("to", ""))
@@ -2550,7 +2577,7 @@ func _open_email_dialog() -> void:
 	if _email_status_label != null:
 		_email_status_label.text = ""
 	if _email_dialog != null:
-		_email_dialog.popup_centered(Vector2i(560, 560))
+		_popup_dialog(_email_dialog, Vector2i(560, 560))
 
 
 func _send_email() -> void:
@@ -2590,6 +2617,17 @@ func _set_email_status(message: String, ok: bool) -> void:
 	_email_status_label.add_theme_color_override(
 		"font_color", BRAND_GREEN if ok else BRAND_GOLD
 	)
+
+
+func _on_email_dialog_visibility_changed() -> void:
+	# Restore the buy dialog once the email dialog opened on top of it closes.
+	# Deferred: exclusivity from the closing dialog is released on the next
+	# frame, popping immediately would hit "already has another exclusive
+	# child".
+	if _email_over_buy and _email_dialog != null and not _email_dialog.visible:
+		_email_over_buy = false
+		if _buy_dialog != null:
+			_popup_dialog.call_deferred(_buy_dialog)
 
 
 func _on_email_dialog_action(action: StringName) -> void:
@@ -2638,7 +2676,7 @@ func _on_open_pro_page() -> void:
 	# server object is unavailable.
 	if server != null and _buy_dialog != null:
 		_refresh_license()
-		_buy_dialog.popup_centered()
+		_popup_dialog(_buy_dialog)
 		return
 	_on_open_pro_browser()
 
@@ -2887,7 +2925,9 @@ func _show_ca_prompt() -> void:
 		fp.left(23),
 		_ca_trust_detail,
 	]
-	_ca_prompt.popup_centered(Vector2i(560, 280))
+	# Height is a hint, not a target: the window grows to fit the label, so
+	# keep it small and let content size the dialog (no dead space).
+	_popup_dialog(_ca_prompt, Vector2i(560, 200))
 
 
 func _on_ca_prompt_install() -> void:
@@ -3041,7 +3081,7 @@ func _on_open_ca_dir() -> void:
 func _on_rotate_ca() -> void:
 	if server == null:
 		return
-	_confirm_rotate.popup_centered()
+	_popup_dialog(_confirm_rotate)
 
 
 func _do_rotate_ca() -> void:
